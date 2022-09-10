@@ -1,0 +1,35 @@
+{
+  "name": "rox",
+  "version": "0.0.0",
+  "repository": {
+		"type": "git",
+		"url": "git+https://github.com/melnikov-s/rox.git"
+	},
+	"author": "Sergey Melnikov",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/melnikov-s/rox/issues"
+	},
+	"homepage": "https://github.com/melnikov-s/rox#readme",
+  "files": [
+    "dist"
+  ],
+  "module": "./dist/rox.es.js",
+  "main": "./dist/rox.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/rox.es.js",
+      "require": "./dist/rox.umd.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.4",
+    "vite": "^3.1.0",
+    "vite-plugin-dts": "^1.4.1"
+  }
+}
