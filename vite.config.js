@@ -3,13 +3,16 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 export default defineConfig({
-  build: {
-    lib: {
-      entry: resolve(__dirname, "src/main.ts"),
-      name: "rox",
-      fileName: (format) => `rox.${format}.js`,
-    },
-    rollupOptions: {},
-  },
-  plugins: [dts()],
+	build: {
+		lib: {
+			entry: resolve(__dirname, "src/main.ts"),
+			name: "rox",
+			fileName: (format) => `rox.${format}.js`,
+		},
+		rollupOptions: {},
+	},
+	test: {
+		globals: true,
+	},
+	plugins: [dts()],
 });
