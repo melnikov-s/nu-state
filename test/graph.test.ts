@@ -3,7 +3,7 @@ import {
 	isInAction,
 	enforceActions,
 	runInAction,
-	autorun,
+	effect,
 	computed,
 	listener,
 	graph,
@@ -13,20 +13,21 @@ import {
 	onReactionsComplete,
 	isTracking,
 	action,
+	signal,
 } from "../src/main";
 
 test("can't listen to untracked changes", () => {
 	let count = 0;
 	const l = listener(() => count++);
-	const o = observable.box(0);
-	const o2 = observable.box(1);
+	const [get, set] = signal(0);
+	const [get2, set2] = signal(1);
 	expect(count).toBe(0);
-	l.track(() => o.get() + untracked(() => o2.get()));
-	o.set(1);
+	l.track(() => get() + untracked(() => get2()));
+	set(1);
 	expect(count).toBe(1);
-	o2.set(2);
+	set2(2);
 	expect(count).toBe(1);
-	o.set(3);
+	set(3);
 	expect(count).toBe(2);
 });
 
@@ -35,15 +36,15 @@ test("can't listen to untracked changes (non default graph)", () => {
 	const opts = { graph: g };
 	let count = 0;
 	const l = listener(() => count++, opts);
-	const o = observable.box(0, opts);
-	const o2 = observable.box(1, opts);
+	const [get, set] = signal(0, opts);
+	const [get2, set2] = signal(1, opts);
 	expect(count).toBe(0);
-	l.track(() => o.get() + g.untracked(() => o2.get()));
-	o.set(1);
+	l.track(() => get() + g.untracked(() => get2()));
+	set(1);
 	expect(count).toBe(1);
-	o2.set(2);
+	set2(2);
 	expect(count).toBe(1);
-	o.set(3);
+	set(3);
 	expect(count).toBe(2);
 });
 
@@ -58,16 +59,16 @@ test("can query graph action state", () => {
 });
 
 test("can query the observed state of an observable", () => {
-	const o = observable.box(0);
-	const c = computed(() => o.get());
+	const o = observable({ value: 0 });
+	const c = computed(() => o.value);
 	const n = atom();
 
 	expect(isObserved(o)).toBe(false);
 	expect(isObserved(c)).toBe(false);
 	expect(isObserved(n)).toBe(false);
 
-	const u = autorun(() => {
-		c.get();
+	const u = effect(() => {
+		c();
 		n.reportObserved();
 	});
 
@@ -84,27 +85,27 @@ test("can query the observed state of an observable", () => {
 
 test("can isolate observable state to a new graph", () => {
 	const g = graph();
-	const o = observable.box(0, { graph: g });
-	const c = computed(() => o.get(), { graph: g });
+	const o = observable({ value: 0 }, { graph: g });
+	const c = computed(() => o.value, { graph: g });
 	const a = atom({ graph: g });
 
 	let count = 0;
 
-	const u = autorun(() => {
-		c.get();
+	const u = effect(() => {
+		c();
 		a.reportObserved();
 		count++;
 	});
 
 	expect(count).toBe(1);
-	o.set(1);
+	o.value = 1;
 	a.reportChanged();
 	expect(count).toBe(1);
 	u();
 
-	autorun(
+	effect(
 		() => {
-			c.get();
+			c();
 			a.reportObserved();
 			expect(g.isTracking()).toBe(true);
 			count++;
@@ -112,7 +113,7 @@ test("can isolate observable state to a new graph", () => {
 		{ graph: g }
 	);
 
-	o.set(1);
+	o.value = 1;
 	expect(count).toBe(2);
 	a.reportChanged();
 	expect(count).toBe(3);
@@ -145,16 +146,16 @@ test("can query the tracking state of the graph", () => {
 	});
 
 	expect(isTracking()).toBe(false);
-	expect(c.get()).toBe(true);
+	expect(c()).toBe(true);
 	expect(count).toBe(1);
-	autorun(() => {
+	effect(() => {
 		count++;
 		expect(isTracking()).toBe(true);
-		expect(c.get()).toBe(true);
+		expect(c()).toBe(true);
 	});
 	expect(count).toBe(3);
 	expect(isTracking()).toBe(false);
-	autorun(() =>
+	effect(() =>
 		untracked(() => {
 			count++;
 			expect(isTracking()).toBe(false);
@@ -166,69 +167,69 @@ test("can query the tracking state of the graph", () => {
 test("will prevent modification of observables outside of actions when actions are enforced", () => {
 	const g = graph();
 
-	const o = observable.box(0, { graph: g });
+	const [get, set] = signal(0, { graph: g });
 	g.enforceActions(true);
 
 	//allowed
-	expect(() => o.set(1)).not.toThrow();
+	expect(() => set(1)).not.toThrow();
 
-	const u = autorun(() => o.get(), { graph: g });
-	expect(() => o.set(2)).toThrowError();
+	const u = effect(() => get(), { graph: g });
+	expect(() => set(2)).toThrowError();
 
 	u();
-	expect(() => o.set(1)).not.toThrow();
+	expect(() => set(1)).not.toThrow();
 });
 
 test("(global) will prevent modification of observables outside of actions when actions are enforced", () => {
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	enforceActions(true);
 
 	//allowed
-	expect(() => o.set(1)).not.toThrow();
+	expect(() => set(1)).not.toThrow();
 
-	const u = autorun(() => o.get());
-	expect(() => o.set(2)).toThrowError();
+	const u = effect(() => get());
+	expect(() => set(2)).toThrowError();
 
 	u();
-	expect(() => o.set(1)).not.toThrow();
+	expect(() => set(1)).not.toThrow();
 	enforceActions(false);
 });
 
 test("enforce actions allows for initialization within a computed", () => {
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	enforceActions(true);
 
 	const c = computed(() => {
 		const obj = observable({ o: undefined });
 
-		obj.o = o.get();
+		obj.o = get();
 
 		return obj;
 	});
 
-	expect(() => c.get()).not.toThrow();
-	expect(autorun(() => c.get())).not.toThrow();
+	expect(() => c()).not.toThrow();
+	expect(effect(() => c())).not.toThrow();
 	enforceActions(false);
 });
 
 test("onReactionsComplete:: can call method when reactions are done", () => {
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	let count = 0;
 	const unsub = onReactionsComplete(() => count++);
 	const act = action(() => {
 		runInAction(() => {
 			runInAction(() => {
-				o.set(o.get() + 1);
+				set(get() + 1);
 			});
 		});
 	});
 	expect(count).toBe(0);
 	act();
-	expect(o.get()).toBe(1);
+	expect(get()).toBe(1);
 	expect(count).toBe(0);
-	autorun(() => o.get());
+	effect(() => get());
 	act();
-	expect(o.get()).toBe(2);
+	expect(get()).toBe(2);
 	expect(count).toBe(1);
 	unsub();
 	act();

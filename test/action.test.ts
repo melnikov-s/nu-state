@@ -1,4 +1,11 @@
-import { observable, runInAction, action, autorun, computed } from "../src/main";
+import {
+	observable,
+	runInAction,
+	action,
+	effect,
+	computed,
+	signal,
+} from "../src/main";
 
 test("immediately executes the function passed in", () => {
 	let count = 0;
@@ -7,9 +14,9 @@ test("immediately executes the function passed in", () => {
 });
 
 test("updates observable values", () => {
-	const o = observable.box(0);
-	runInAction(() => o.set(1));
-	expect(o.get()).toBe(1);
+	const [get, set] = signal(0);
+	runInAction(() => set(1));
+	expect(get()).toBe(1);
 });
 
 test("runInAction returns the result of the action", () => {
@@ -17,21 +24,21 @@ test("runInAction returns the result of the action", () => {
 });
 
 test("only calls reactions when the action is completed", () => {
-	const o1 = observable.box(0);
-	const o2 = observable.box(0);
+	const [get1, set1] = signal(0);
+	const [get2, set2] = signal(0);
 	let result = 0;
 	let count = 0;
-	autorun(() => {
-		result = o1.get() + o2.get();
+	effect(() => {
+		result = get1() + get2();
 		count++;
 	});
 
 	expect(count).toBe(1);
 
 	runInAction(() => {
-		o1.set(1);
+		set1(1);
 		expect(result).toBe(0);
-		o2.set(2);
+		set2(2);
 		expect(result).toBe(0);
 		expect(count).toBe(1);
 	});
@@ -42,87 +49,87 @@ test("only calls reactions when the action is completed", () => {
 
 test("action is untracked", () => {
 	let count = 0;
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 
-	autorun(() => {
-		runInAction(() => o.get());
+	effect(() => {
+		runInAction(() => get());
 		count++;
 	});
 
 	expect(count).toBe(1);
-	o.set(1);
+	set(1);
 	expect(count).toBe(1);
 });
 
 test("computed values are updated within an action", () => {
 	let countC = 0;
 	let countA = 0;
-	const o1 = observable.box(0);
-	const o2 = observable.box(0);
+	const [get1, set1] = signal(0);
+	const [get2, set2] = signal(0);
 	const c = computed(() => {
 		countC++;
-		return o1.get() + o2.get();
+		return get1() + get2();
 	});
-	autorun(() => {
-		c.get();
+	effect(() => {
+		c();
 		countA++;
 	});
 	expect(countC).toBe(1);
 	expect(countA).toBe(1);
 
 	runInAction(() => {
-		expect(c.get()).toBe(0);
+		expect(c()).toBe(0);
 		expect(countC).toBe(1);
-		o1.set(1);
-		expect(c.get()).toBe(1);
+		set1(1);
+		expect(c()).toBe(1);
 		expect(countA).toBe(1);
 		expect(countC).toBe(2);
-		o2.set(2);
-		expect(c.get()).toBe(3);
+		set2(2);
+		expect(c()).toBe(3);
 		expect(countC).toBe(3);
 	});
 
 	expect(countA).toBe(2);
-	expect(c.get()).toBe(3);
+	expect(c()).toBe(3);
 	expect(countC).toBe(3);
 });
 
 test("does not trigger a change when an observable did not end up producing a new value", () => {
 	let count = 0;
-	const o = observable.box(0);
-	const c = computed(() => o.get() * 2);
+	const [get, set] = signal(0);
+	const c = computed(() => get() * 2);
 
-	autorun(() => {
-		c.get();
+	effect(() => {
+		c();
 		count++;
 	});
 
 	expect(count).toBe(1);
 
 	runInAction(() => {
-		o.set(1);
-		o.set(0);
+		set(1);
+		set(0);
 	});
 
 	expect(count).toBe(1);
 });
 
 test("can create an action to execute at any time", () => {
-	const o1 = observable.box(0);
-	const o2 = observable.box(0);
+	const [get1, set1] = signal(0);
+	const [get2, set2] = signal(0);
 	let result = 0;
 	let count = 0;
-	autorun(() => {
-		result = o1.get() + o2.get();
+	effect(() => {
+		result = get1() + get2();
 		count++;
 	});
 
 	expect(count).toBe(1);
 
 	const myAction = action(() => {
-		o1.set(1);
+		set1(1);
 		expect(result).toBe(0);
-		o2.set(2);
+		set2(2);
 		expect(result).toBe(0);
 		expect(count).toBe(1);
 	});
@@ -141,35 +148,35 @@ test("created action returns the result of the action", () => {
 test("can execute an action within an action", () => {
 	let countC = 0;
 	let countA = 0;
-	const o1 = observable.box(0);
-	const o2 = observable.box(0);
+	const [get1, set1] = signal(0);
+	const [get2, set2] = signal(0);
 	const c = computed(() => {
 		countC++;
-		return o1.get() + o2.get();
+		return get1() + get2();
 	});
-	autorun(() => {
-		c.get();
+	effect(() => {
+		c();
 		countA++;
 	});
 	expect(countC).toBe(1);
 	expect(countA).toBe(1);
 
 	runInAction(() => {
-		expect(c.get()).toBe(0);
+		expect(c()).toBe(0);
 		expect(countC).toBe(1);
-		o1.set(1);
-		expect(c.get()).toBe(1);
+		set1(1);
+		expect(c()).toBe(1);
 		expect(countA).toBe(1);
 		expect(countC).toBe(2);
 		runInAction(() => {
-			runInAction(() => o2.set(2));
-			o1.set(10);
+			runInAction(() => set2(2));
+			set1(10);
 		});
 		expect(countA).toBe(1);
-		expect(c.get()).toBe(12);
+		expect(c()).toBe(12);
 		expect(countC).toBe(3);
-		runInAction(() => o1.set(2));
-		expect(c.get()).toBe(4);
+		runInAction(() => set1(2));
+		expect(c()).toBe(4);
 		expect(countC).toBe(4);
 		expect(countA).toBe(1);
 	});
@@ -180,15 +187,15 @@ test("can execute an action within an action", () => {
 test("computed values are cached in actions even when unobserved", () => {
 	let calls = 0;
 
-	const o = observable.box(1);
+	const [get, set] = signal(1);
 	const c = computed(() => {
 		calls++;
-		return o.get() * o.get();
+		return get() * get();
 	});
 	const doAction = action(() => {
-		c.get();
-		c.get();
-		for (let i = 0; i < 10; i++) o.set(o.get() + 1);
+		c();
+		c();
+		for (let i = 0; i < 10; i++) set(get() + 1);
 	});
 
 	doAction();
@@ -197,7 +204,7 @@ test("computed values are cached in actions even when unobserved", () => {
 	doAction();
 	expect(calls).toBe(2);
 
-	autorun(() => c.get());
+	effect(() => c());
 	expect(calls).toBe(3);
 
 	doAction();
@@ -208,29 +215,29 @@ test("unobserved computed values do not empty cache until all actions are done",
 	let calls = 0;
 	let called = false;
 
-	const o1 = observable.box(0);
+	const [get1, set1] = signal(0);
 
 	const c = computed(() => {
 		calls++;
-		return { zero: o1.get() * 0 };
+		return { zero: get1() * 0 };
 	});
 
 	const doAction1 = action(() => {
 		called = true;
-		o1.set(o1.get() + 1);
-		c.get();
-		c.get();
+		set1(get1() + 1);
+		c();
+		c();
 	});
 
 	const doAction2 = action(() => {
-		c.get();
-		c.get();
+		c();
+		c();
 	});
 
-	autorun(() => {
-		o1.get();
+	effect(() => {
+		get1();
 		if (called) doAction2();
-		c.get();
+		c();
 	});
 
 	doAction1();
@@ -239,62 +246,62 @@ test("unobserved computed values do not empty cache until all actions are done",
 });
 
 test("unobserved computed values respond to changes within an action", () => {
-	const o = observable.box(1);
+	const [get, set] = signal(1);
 	const c = computed(() => {
-		return o.get() * o.get();
+		return get() * get();
 	});
 	const doAction = action(() => {
-		expect(c.get()).toBe(1);
-		o.set(10);
-		expect(c.get()).toBe(100);
+		expect(c()).toBe(1);
+		set(10);
+		expect(c()).toBe(100);
 	});
 
 	doAction();
-	expect(c.get()).toBe(100);
+	expect(c()).toBe(100);
 });
 
 test("computed can throw within an action", () => {
-	const o = observable.box(1);
+	const [get, set] = signal(1);
 	const c = computed(() => {
-		if (o.get() === 0) {
+		if (get() === 0) {
 			throw new Error();
 		}
 
-		return o.get();
+		return get();
 	});
 
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		count++;
-		c.get();
+		c();
 	});
 
 	expect(count).toBe(1);
 
 	runInAction(() => {
 		try {
-			o.set(0);
-			c.get();
+			set(0);
+			c();
 		} catch (e) {}
-		expect(() => c.get()).toThrowError();
-		o.set(10);
+		expect(() => c()).toThrowError();
+		set(10);
 	});
 
 	expect(count).toBe(2);
-	expect(c.get()).toBe(10);
+	expect(c()).toBe(10);
 });
 
-test("[mobx-test] action in autorun does keep / make computed values alive", () => {
+test("[mobx-test] action in effect does keep / make computed values alive", () => {
 	let calls = 0;
 	const myComputed = computed(() => calls++);
 	const callComputedTwice = () => {
-		myComputed.get();
-		myComputed.get();
+		myComputed();
+		myComputed();
 	};
 
 	const runWithMemoizing = (fun) => {
-		autorun(fun)();
+		effect(fun)();
 	};
 
 	callComputedTwice();

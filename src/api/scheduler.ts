@@ -1,7 +1,7 @@
 import makeListener, { Listener } from "./listener";
 import { Graph, resolveGraph } from "./graph";
 import reaction from "./reaction";
-import autorun from "./autorun";
+import effect from "./effect";
 
 export type Scheduler = {
 	listener: (callback: () => void) => Listener;
@@ -9,7 +9,7 @@ export type Scheduler = {
 		track: () => T,
 		callback: (a: T, listener: Listener) => void
 	) => () => void;
-	autorun: (callback: (t: Listener) => void) => () => void;
+	effect: (callback: (t: Listener) => void) => () => void;
 };
 
 function schedule(
@@ -24,11 +24,11 @@ function schedule(
 
 	function applySchedule(
 		callback: Function,
-		autorun: boolean = false
+		effect: boolean = false
 	): () => void {
 		let ran = false;
 		return (...args) => {
-			if (autorun && !ran) {
+			if (effect && !ran) {
 				callback();
 			}
 
@@ -63,8 +63,8 @@ function schedule(
 		reaction<T>(track: () => T, callback: (a: T, listener: Listener) => void) {
 			return reaction(track, applySchedule(callback), { graph });
 		},
-		autorun(callback: (t: Listener) => void) {
-			return autorun(applySchedule(callback, true), { graph });
+		effect(callback: (t: Listener) => void) {
+			return effect(applySchedule(callback, true), { graph });
 		},
 	};
 }

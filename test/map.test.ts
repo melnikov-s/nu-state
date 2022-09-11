@@ -1,5 +1,5 @@
 import {
-	autorun,
+	effect,
 	observable,
 	isObservable,
 	reaction,
@@ -8,7 +8,7 @@ import {
 import {
 	getAdministration,
 	getObservableSource,
-} from "../src/types/utils/lookup";
+} from "../src/observables/utils/lookup";
 
 const map = <K = any, V = any>(obj: Map<K, V> = new Map()): Map<K, V> => {
 	return observable(obj);
@@ -35,7 +35,7 @@ test("map values are deeply observable", () => {
 	m.set(o, o);
 	expect(isObservable(m.get(o))).toBe(true);
 
-	autorun(() => {
+	effect(() => {
 		m.get(o).prop;
 		count++;
 	});
@@ -130,7 +130,7 @@ test("WeakMap is reactive", () => {
 	const target = {};
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		m.has(target);
 	});
@@ -194,7 +194,7 @@ test("does not trigger a change when same observable is set on map initialized w
 	);
 
 	let count = 0;
-	autorun(() => {
+	effect(() => {
 		m.forEach(() => {});
 		count++;
 	});
@@ -312,15 +312,15 @@ test("[mobx-test] observe value", function () {
 	let valueX = undefined;
 	let valueY = undefined;
 
-	autorun(function () {
+	effect(function () {
 		hasX = a.has("x");
 	});
 
-	autorun(function () {
+	effect(function () {
 		valueX = a.get("x");
 	});
 
-	autorun(function () {
+	effect(function () {
 		valueY = a.get("y");
 	});
 
@@ -364,13 +364,13 @@ test("[mobx-test] observe collections", function () {
 	const x = map();
 	let ks, vs, entries;
 
-	autorun(function () {
+	effect(function () {
 		ks = keys(x);
 	});
-	autorun(function () {
+	effect(function () {
 		vs = iteratorToArray(x.values());
 	});
-	autorun(function () {
+	effect(function () {
 		entries = iteratorToArray(x.entries());
 	});
 
@@ -418,7 +418,7 @@ test("[mobx-test] cleanup", function () {
 	const x = map(new Map(Object.entries({ a: 1 })));
 
 	let aValue;
-	const disposer = autorun(function () {
+	const disposer = effect(function () {
 		aValue = x.get("a");
 	});
 
@@ -464,7 +464,7 @@ test("[mobx-test] unobserve before delete", function () {
 		},
 	});
 	// the error only happens if the value is observed
-	autorun(function () {
+	effect(function () {
 		values(myObservable.myMap).forEach(function (value) {
 			propValues.push(value.myCalculatedProp);
 		});
@@ -485,7 +485,7 @@ test("[mobx-test] has should not throw on invalid keys", function () {
 test("[mobx-test] map.clear should not be tracked", () => {
 	const x = map(new Map(Object.entries({ a: 3 })));
 	let c = 0;
-	const d = autorun(() => {
+	const d = effect(() => {
 		c++;
 		x.clear();
 	});
@@ -661,7 +661,7 @@ test("[mobx-test] map.size is reactive", () => {
 	const m = map();
 	const sizes = [];
 
-	const d = autorun(() => {
+	const d = effect(() => {
 		sizes.push(m.size);
 	});
 
@@ -674,10 +674,10 @@ test("[mobx-test] map.size is reactive", () => {
 
 test("[mobx-test] .forEach() subscribes for key changes", () => {
 	const m = map();
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		m.forEach((_) => {});
 	});
 
@@ -685,15 +685,15 @@ test("[mobx-test] .forEach() subscribes for key changes", () => {
 	m.set(2, 2);
 	m.delete(1);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .keys() subscribes for key changes", () => {
 	const m = map();
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		for (const _ of m.keys()) {
 		}
 	});
@@ -702,15 +702,15 @@ test("[mobx-test] .keys() subscribes for key changes", () => {
 	m.set(2, 2);
 	m.delete(1);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .values() subscribes for key changes", () => {
 	const m = map();
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		for (const _ of m.values()) {
 		}
 	});
@@ -719,15 +719,15 @@ test("[mobx-test] .values() subscribes for key changes", () => {
 	m.set(2, 2);
 	m.delete(1);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .entries() subscribes for key changes", () => {
 	const m = map();
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		for (const _ of m.entries()) {
 		}
 	});
@@ -736,7 +736,7 @@ test("[mobx-test] .entries() subscribes for key changes", () => {
 	m.set(2, 2);
 	m.delete(1);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .entries() subscribes for value changes", () => {
@@ -747,10 +747,10 @@ test("[mobx-test] .entries() subscribes for value changes", () => {
 			[3, 3],
 		])
 	);
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		for (const _ of m.entries()) {
 		}
 	});
@@ -759,7 +759,7 @@ test("[mobx-test] .entries() subscribes for value changes", () => {
 	m.set(2, 22);
 	m.set(3, 33);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .values() subscribes for value changes", () => {
@@ -770,10 +770,10 @@ test("[mobx-test] .values() subscribes for value changes", () => {
 			[3, 3],
 		])
 	);
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		for (const _ of m.values()) {
 		}
 	});
@@ -782,7 +782,7 @@ test("[mobx-test] .values() subscribes for value changes", () => {
 	m.set(2, 22);
 	m.set(3, 33);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .forEach() subscribes for value changes", () => {
@@ -793,10 +793,10 @@ test("[mobx-test] .forEach() subscribes for value changes", () => {
 			[3, 3],
 		])
 	);
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		m.forEach((_) => {});
 	});
 
@@ -804,7 +804,7 @@ test("[mobx-test] .forEach() subscribes for value changes", () => {
 	m.set(2, 22);
 	m.set(3, 33);
 
-	expect(autorunInvocationCount).toBe(4);
+	expect(effectInvocationCount).toBe(4);
 });
 
 test("[mobx-test] .keys() does NOT subscribe for value changes", () => {
@@ -815,10 +815,10 @@ test("[mobx-test] .keys() does NOT subscribe for value changes", () => {
 			[3, 3],
 		])
 	);
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		for (const _ of m.keys()) {
 		}
 	});
@@ -827,7 +827,7 @@ test("[mobx-test] .keys() does NOT subscribe for value changes", () => {
 	m.set(2, 22);
 	m.set(3, 33);
 
-	expect(autorunInvocationCount).toBe(1);
+	expect(effectInvocationCount).toBe(1);
 });
 
 test("[mobx-test] noop mutations do NOT reportChanges", () => {
@@ -838,10 +838,10 @@ test("[mobx-test] noop mutations do NOT reportChanges", () => {
 			[3, 3],
 		])
 	);
-	let autorunInvocationCount = 0;
+	let effectInvocationCount = 0;
 
-	autorun(() => {
-		autorunInvocationCount++;
+	effect(() => {
+		effectInvocationCount++;
 		m.forEach((_) => {});
 	});
 
@@ -850,7 +850,7 @@ test("[mobx-test] noop mutations do NOT reportChanges", () => {
 	m.set(3, 3);
 	m.delete("NOT IN MAP" as any);
 
-	expect(autorunInvocationCount).toBe(1);
+	expect(effectInvocationCount).toBe(1);
 });
 
 test("[mobx-test] iterators should be resilient to concurrent delete operation", () => {

@@ -1,5 +1,5 @@
-import { propertyType, getOpts } from "../types/utils/configuration";
-import { getCtorConfiguration } from "../types/utils/lookup";
+import { propertyType, getOpts } from "../observables/utils/configuration";
+import { getCtorConfiguration } from "../observables/utils/lookup";
 import { isPropertyKey } from "../utils";
 import { runInAction } from "./graph";
 

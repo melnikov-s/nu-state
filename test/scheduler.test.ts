@@ -1,5 +1,11 @@
 import { vi } from "vitest";
-import { observable, createScheduler, Scheduler, isInBatch } from "../src/main";
+import {
+	observable,
+	createScheduler,
+	Scheduler,
+	isInBatch,
+	signal,
+} from "../src/main";
 
 const createTimeoutScheduler = (timeout: number = 0): Scheduler =>
 	createScheduler((fn) => setTimeout(fn, timeout));
@@ -8,67 +14,67 @@ beforeEach(() => {
 	vi.useFakeTimers();
 });
 
-test("can create an autorun scheduler", () => {
-	const o = observable.box(0);
+test("can create an effect scheduler", () => {
+	const [get, set] = signal(0);
 	const scheduler = createTimeoutScheduler(0);
 	let count = 0;
-	scheduler.autorun(() => {
-		o.get();
+	scheduler.effect(() => {
+		get();
 		count++;
 	});
 	expect(count).toBe(1);
-	o.set(1);
-	o.set(2);
+	set(1);
+	set(2);
 	expect(count).toBe(1);
 	vi.runAllTimers();
 	expect(count).toBe(2);
 });
 
 test("can create a reaction scheduler", () => {
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	const scheduler = createTimeoutScheduler(0);
 	let count = 0;
 	scheduler.reaction(
-		() => o.get(),
+		() => get(),
 		() => count++
 	);
-	o.set(1);
-	o.set(2);
+	set(1);
+	set(2);
 	expect(count).toBe(0);
 	vi.runAllTimers();
 	expect(count).toBe(1);
-	o.set(3);
+	set(3);
 });
 
 test("reaction scheduler passes in the last value into callback", () => {
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	const scheduler = createTimeoutScheduler(0);
 	const count = 0;
 	let value = 0;
 	scheduler.reaction(
-		() => o.get(),
+		() => get(),
 		(v) => {
 			value = v;
 		}
 	);
-	o.set(1);
-	o.set(2);
-	o.set(3);
+	set(1);
+	set(2);
+	set(3);
 	expect(value).toBe(0);
 	vi.runAllTimers();
 	expect(value).toBe(3);
 });
 
 test("unsubscribe removes scheduled callback", () => {
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	const scheduler = createTimeoutScheduler(0);
 	let count = 0;
-	const unsub = scheduler.autorun(() => {
-		o.get();
+	const unsub = scheduler.effect(() => {
+		get();
 		count++;
 	});
 	expect(count).toBe(1);
-	o.set(1);
+	set(1);
 	unsub();
 	vi.runAllTimers();
 	expect(count).toBe(1);
@@ -78,11 +84,11 @@ test("can create a scheduled listener", () => {
 	let count = 0;
 	const scheduler = createTimeoutScheduler(0);
 	const l = scheduler.listener(() => count++);
-	const o = observable.box(0);
-	l.track(() => o.get());
-	o.set(1);
-	o.set(2);
-	o.set(3);
+	const [get, set] = signal(0);
+	l.track(() => get());
+	set(1);
+	set(2);
+	set(3);
 	expect(count).toBe(0);
 	vi.runAllTimers();
 	expect(count).toBe(1);
@@ -95,11 +101,11 @@ test("scheduled reactions occur in a batch", () => {
 		count++;
 		expect(isInBatch()).toBe(true);
 	});
-	const o = observable.box(0);
-	l.track(() => o.get());
-	o.set(1);
-	o.set(2);
-	o.set(3);
+	const [get, set] = signal(0);
+	l.track(() => get());
+	set(1);
+	set(2);
+	set(3);
 	expect(count).toBe(0);
 	vi.runAllTimers();
 	expect(count).toBe(1);
@@ -120,7 +126,7 @@ test("listeners on the same scheduler trigger in a tight loop", () => {
 		);
 
 	const scheduler = createCustomScheduler();
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	const l = scheduler.listener(() => {
 		count++;
 	});
@@ -130,11 +136,11 @@ test("listeners on the same scheduler trigger in a tight loop", () => {
 	const l3 = scheduler.listener(() => {
 		count++;
 	});
-	l.track(() => o.get());
-	l2.track(() => o.get());
-	l3.track(() => o.get());
-	o.set(1);
-	o.set(2);
+	l.track(() => get());
+	l2.track(() => get());
+	l3.track(() => get());
+	set(1);
+	set(2);
 	vi.runAllTimers();
 	expect(count).toBe(3);
 	expect(asserted).toBe(true);
@@ -145,7 +151,7 @@ test("can create a sync scheduler", () => {
 	const createCustomScheduler = (): Scheduler => createScheduler((fn) => fn());
 
 	const scheduler = createCustomScheduler();
-	const o = observable.box(0);
+	const [get, set] = signal(0);
 	const l = scheduler.listener(() => {
 		count++;
 	});
@@ -155,10 +161,10 @@ test("can create a sync scheduler", () => {
 	const l3 = scheduler.listener(() => {
 		count++;
 	});
-	l.track(() => o.get());
-	l2.track(() => o.get());
-	l3.track(() => o.get());
-	o.set(1);
-	o.set(2);
+	l.track(() => get());
+	l2.track(() => get());
+	l3.track(() => get());
+	set(1);
+	set(2);
 	expect(count).toBe(6);
 });

@@ -1,15 +1,14 @@
 import ComputedNode from "../core/nodes/computed";
-import { getOpts, propertyType } from "../types/utils/configuration";
-import { getCtorConfiguration } from "../types/utils/lookup";
+import { getOpts, propertyType } from "../observables/utils/configuration";
+import { getCtorConfiguration } from "../observables/utils/lookup";
 import { isPropertyKey } from "../utils";
-import { resolveGraph, Graph } from "./graph";
+import { resolveGraph, Graph, setNode } from "./graph";
 
-export type Computed<T> = {
+export type Computed<T> = (() => T) & {
 	clear: () => void;
 	equals: (value: T) => boolean;
 	isDirty: () => boolean;
 	isKeepAlive: () => boolean;
-	get: () => T;
 	setKeepAlive: (keepAlive: boolean) => void;
 };
 
@@ -20,7 +19,7 @@ export type ComputedOptions<T> = {
 	context?: unknown;
 };
 
-function computed<T>(fn: () => T, opts?: ComputedOptions<T>): ComputedNode<T>;
+function computed<T>(fn: () => T, opts?: ComputedOptions<T>): Computed<T>;
 
 function computed(
 	target: unknown,
@@ -41,13 +40,25 @@ function computed<T>(...args: unknown[]): unknown {
 		return descriptor;
 	} else {
 		const [fn, opts] = args as [() => T, ComputedOptions<T>];
-		return new ComputedNode(
+		const computedNode = new ComputedNode(
 			resolveGraph(opts?.graph),
 			fn,
 			opts?.equals,
 			opts?.keepAlive,
 			opts?.context
 		);
+
+		const computed = Object.assign(computedNode.get.bind(computedNode), {
+			clear: computedNode.clear.bind(computedNode),
+			equals: computedNode.equals.bind(computedNode),
+			isDirty: computedNode.isDirty.bind(computedNode),
+			isKeepAlive: computedNode.isKeepAlive.bind(computedNode),
+			setKeepAlive: computedNode.setKeepAlive.bind(computedNode),
+		});
+
+		setNode(computed, computedNode);
+
+		return computed;
 	}
 }
 

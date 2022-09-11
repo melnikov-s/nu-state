@@ -1,4 +1,4 @@
-import { observable, autorun } from "../src/main";
+import { observable, effect } from "../src/main";
 
 test("date methods return values", () => {
 	const now = new Date().getMonth();
@@ -12,7 +12,7 @@ test("date methods are reactive", () => {
 
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		d.getDate();
 		count++;
 	});

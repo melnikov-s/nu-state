@@ -2,7 +2,7 @@ import Graph from "../core/graph";
 import { defaultEquals } from "../utils";
 import Atom from "../core/nodes/atom";
 
-export default class ObservableValue<T> {
+export default class Signal<T> {
 	value: T;
 	graph: Graph;
 	atom: Atom<T>;

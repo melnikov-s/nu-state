@@ -1,5 +1,5 @@
-import { Configuration } from "../types/utils/configuration";
-import { setCtorConfiguration } from "../types/utils/lookup";
+import { Configuration } from "../observables/utils/configuration";
+import { setCtorConfiguration } from "../observables/utils/lookup";
 import Observable from "./ObservableClass";
 
 export default function decorate<T extends typeof Observable>(

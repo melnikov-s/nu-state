@@ -3,8 +3,8 @@ import {
 	getObservable,
 	hasCtorConfiguration,
 	setCtorAutoConfigure,
-} from "../types/utils/lookup";
-import { Configuration } from "../types/utils/configuration";
+} from "../observables/utils/lookup";
+import { Configuration } from "../observables/utils/configuration";
 
 export default class Observable {
 	constructor(opts?: {

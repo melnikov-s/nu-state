@@ -33,13 +33,13 @@ function runSamples(perfTest, resultsFn) {
 }
 
 describe("lobx tests", () => {
-	const { computed, observable, reaction, autorun, runInAction } = lobx;
+	const { computed, observable, reaction, effect, runInAction } = lobx;
 
 	test("one observes ten thousand that observe one", function (done) {
 		console.log("-------- lobx results --------");
 		runSamples(
 			() => {
-				const a = observable.box(2);
+				const a = signal(2);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
@@ -90,7 +90,7 @@ describe("lobx tests", () => {
 	test("five hundred properties that observe their sibling", function (done) {
 		runSamples(
 			() => {
-				const a = observable.box(1);
+				const a = signal(1);
 				const observables: any[] = [a];
 				for (let i = 0; i < 500; i++) {
 					(function (idx) {
@@ -134,7 +134,7 @@ describe("lobx tests", () => {
 		runSamples(
 			() => {
 				const values = [];
-				for (let i = 0; i < 100; i++) values.push(observable.box(0));
+				for (let i = 0; i < 100; i++) values.push(signal(0));
 
 				const sum = computed(function () {
 					let sum = 0;
@@ -168,7 +168,7 @@ describe("lobx tests", () => {
 	test("lots of unused computables", function (done) {
 		runSamples(
 			() => {
-				const a = observable.box(1);
+				const a = signal(1);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
@@ -188,7 +188,7 @@ describe("lobx tests", () => {
 				});
 
 				let sum = 0;
-				const subscription = autorun(() => (sum = b.get()));
+				const subscription = effect(() => (sum = b.get()));
 
 				expect(sum).toBe(49995000);
 
@@ -213,11 +213,11 @@ describe("lobx tests", () => {
 	test("many unreferenced observables", function (done) {
 		runSamples(
 			() => {
-				const a = observable.box(3);
-				const b = observable.box(6);
-				const c = observable.box(7);
+				const a = signal(3);
+				const b = signal(6);
+				const c = signal(7);
 				const d = computed(function () {
-					return a.get() * b.get() * c.get();
+					return a.get() * b.get() * c();
 				});
 				expect(d.get()).toBe(126);
 
@@ -356,13 +356,13 @@ describe("lobx tests", () => {
 });
 
 describe("mobx tests", () => {
-	const { computed, observable, reaction, autorun, runInAction } = mobx;
+	const { computed, observable, reaction, effect, runInAction } = mobx;
 
 	test("one observes ten thousand that observe one", function (done) {
 		console.log("-------- mobx results --------");
 		runSamples(
 			() => {
-				const a = observable.box(2);
+				const a = signal(2);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
@@ -413,7 +413,7 @@ describe("mobx tests", () => {
 	test("five hundred properties that observe their sibling", function (done) {
 		runSamples(
 			() => {
-				const a = observable.box(1);
+				const a = signal(1);
 				const observables: any = [a];
 				for (let i = 0; i < 500; i++) {
 					(function (idx) {
@@ -457,7 +457,7 @@ describe("mobx tests", () => {
 		runSamples(
 			() => {
 				const values = [];
-				for (let i = 0; i < 100; i++) values.push(observable.box(0));
+				for (let i = 0; i < 100; i++) values.push(signal(0));
 
 				const sum = computed(function () {
 					let sum = 0;
@@ -491,7 +491,7 @@ describe("mobx tests", () => {
 	test("lots of unused computables", function (done) {
 		runSamples(
 			() => {
-				const a = observable.box(1);
+				const a = signal(1);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
@@ -511,7 +511,7 @@ describe("mobx tests", () => {
 				});
 
 				let sum = 0;
-				const subscription = autorun(() => (sum = b.get()));
+				const subscription = effect(() => (sum = b.get()));
 
 				expect(sum).toBe(49995000);
 
@@ -536,11 +536,11 @@ describe("mobx tests", () => {
 	test("many unreferenced observables", function (done) {
 		runSamples(
 			() => {
-				const a = observable.box(3);
-				const b = observable.box(6);
-				const c = observable.box(7);
+				const a = signal(3);
+				const b = signal(6);
+				const c = signal(7);
 				const d = computed(function () {
-					return a.get() * b.get() * c.get();
+					return a.get() * b.get() * c();
 				});
 				expect(d.get()).toBe(126);
 
