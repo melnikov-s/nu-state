@@ -1,5 +1,5 @@
 import {
-	autorun,
+	effect,
 	reaction,
 	observable,
 	runInAction,
@@ -53,7 +53,7 @@ test("getters on the object become computed", () => {
 		},
 	});
 
-	autorun(() => o.comp);
+	effect(() => o.comp);
 	expect(o.comp).toBe(2);
 	expect(count).toBe(1);
 	o.prop++;
@@ -88,7 +88,7 @@ test("observable objects can be configured", () => {
 
 		let count = 0;
 
-		autorun(() => {
+		effect(() => {
 			o.comp;
 			count++;
 		});
@@ -136,7 +136,7 @@ test("observable objects can be configured with function", () => {
 
 		let count = 0;
 
-		autorun(() => {
+		effect(() => {
 			o.comp;
 			o.nonObservableValue;
 			count++;
@@ -185,7 +185,7 @@ test("observable objects can be configured with config overwriting defaults", ()
 
 		let count = 0;
 
-		autorun(() => {
+		effect(() => {
 			o.comp;
 			o.nonConfiguredValue;
 			o.nonObservableValue;
@@ -241,7 +241,7 @@ test("observable objects can be configured with function overwriting defaults", 
 
 		let count = 0;
 
-		autorun(() => {
+		effect(() => {
 			o.comp;
 			o.nonConfiguredValue;
 			count++;
@@ -279,7 +279,7 @@ test("observable object methods can be bound", () => {
 
 		let count = 0;
 
-		autorun(() => {
+		effect(() => {
 			o.val;
 			count++;
 		});
@@ -344,7 +344,7 @@ test("observable objects are deeply observed", () => {
 
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.obj.prop;
 		o.arr.length;
 		"objB" in o && "obj" in o.objB && o.objB.obj.prop;
@@ -367,7 +367,7 @@ test("does not respond to no-op", () => {
 	let count = 0;
 	const x = object({});
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		return x.x;
 	});
@@ -392,7 +392,7 @@ test("observes decorated non plain objects directly", () => {
 	}
 	decorate({ prop: observable, comp: computed }, C);
 	const o = observable(new C());
-	autorun(() => {
+	effect(() => {
 		count++;
 		o.comp;
 	});
@@ -655,7 +655,7 @@ test("[mobx-test] delete and undelete should work", () => {
 	const x = object({});
 
 	const events = [];
-	autorun(() => {
+	effect(() => {
 		events.push("a" in x);
 	});
 
@@ -848,7 +848,7 @@ test("[mobx-test] adding a different key doesn't trigger a pending key", () => {
 	const x = object({});
 	let counter = 0;
 
-	const d = autorun(() => {
+	const d = effect(() => {
 		x.x;
 		counter++;
 	});
@@ -882,7 +882,7 @@ test("[mobx-test] deleting / recreate prop", () => {
 
 	const events = [];
 
-	autorun(() => {
+	effect(() => {
 		events.push(value.foo);
 	});
 	delete value.foo;

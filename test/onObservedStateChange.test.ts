@@ -2,9 +2,10 @@ import {
 	atom,
 	observable,
 	onObservedStateChange,
-	autorun,
+	effect,
 	computed,
 	runInAction,
+	signal,
 } from "../src/main";
 
 const onBecomeObserved = (o, ...args: any[]) =>
@@ -88,19 +89,19 @@ dateCase.label = "date";
 		const u = onBecomeObserved(testCase.obj, () => count++);
 		expect(count).toBe(0);
 
-		const u1 = autorun(() => testCase.get());
+		const u1 = effect(() => testCase.get());
 		expect(count).toBe(1);
-		const u2 = autorun(() => testCase.get());
+		const u2 = effect(() => testCase.get());
 		expect(count).toBe(1);
 		u1();
 		u2();
-		const u3 = autorun(() => testCase.get());
+		const u3 = effect(() => testCase.get());
 		expect(count).toBe(2);
 		u3();
 		testCase.get();
 		expect(count).toBe(2);
 		u();
-		const u4 = autorun(() => {
+		const u4 = effect(() => {
 			testCase.get();
 			testCase.get();
 		});
@@ -114,20 +115,20 @@ dateCase.label = "date";
 		const u = onBecomeUnobserved(testCase.obj, () => count++);
 		expect(count).toBe(0);
 
-		const u1 = autorun(() => testCase.get());
+		const u1 = effect(() => testCase.get());
 		expect(count).toBe(0);
-		const u2 = autorun(() => testCase.get());
+		const u2 = effect(() => testCase.get());
 		expect(count).toBe(0);
 		u1();
 		expect(count).toBe(0);
 		u2();
 		expect(count).toBe(1);
-		const u3 = autorun(() => testCase.get());
+		const u3 = effect(() => testCase.get());
 		expect(count).toBe(1);
 		u3();
 		expect(count).toBe(2);
 		u();
-		const u4 = autorun(() => {
+		const u4 = effect(() => {
 			testCase.get();
 			testCase.get();
 		});
@@ -144,13 +145,13 @@ dateCase.label = "date";
 			count++;
 		});
 		expect(count).toBe(0);
-		autorun(() => testCase.get(testCase.existingKeyAlt));
+		effect(() => testCase.get(testCase.existingKeyAlt));
 		expect(count).toBe(0);
-		const u2 = autorun(() => testCase.get(testCase.existingKey));
+		const u2 = effect(() => testCase.get(testCase.existingKey));
 		expect(count).toBe(1);
 		u2();
 		expect(count).toBe(1);
-		autorun(() => testCase.get(testCase.existingKey));
+		effect(() => testCase.get(testCase.existingKey));
 		expect(count).toBe(2);
 	});
 
@@ -161,15 +162,15 @@ dateCase.label = "date";
 			count++;
 		});
 		expect(count).toBe(0);
-		autorun(() => testCase.get(testCase.existingKey));
+		effect(() => testCase.get(testCase.existingKey));
 		expect(count).toBe(0);
-		const u2 = autorun(() => testCase.get(testCase.notExistingKey));
+		const u2 = effect(() => testCase.get(testCase.notExistingKey));
 		expect(count).toBe(0);
 		testCase.add(testCase.notExistingKey, 1);
 		expect(count).toBe(1);
 		u2();
 		expect(count).toBe(1);
-		autorun(() => testCase.get(testCase.notExistingKey));
+		effect(() => testCase.get(testCase.notExistingKey));
 		expect(count).toBe(2);
 	});
 
@@ -180,14 +181,14 @@ dateCase.label = "date";
 			count++;
 		});
 		expect(count).toBe(0);
-		const u1 = autorun(() => testCase.get(testCase.existingKeyAlt));
+		const u1 = effect(() => testCase.get(testCase.existingKeyAlt));
 		u1();
 		expect(count).toBe(0);
-		const u2 = autorun(() => testCase.get(testCase.existingKey));
+		const u2 = effect(() => testCase.get(testCase.existingKey));
 		expect(count).toBe(0);
 		u2();
 		expect(count).toBe(1);
-		const u3 = autorun(() => testCase.get(testCase.existingKey));
+		const u3 = effect(() => testCase.get(testCase.existingKey));
 		expect(count).toBe(1);
 		u3();
 		expect(count).toBe(2);
@@ -200,13 +201,13 @@ dateCase.label = "date";
 			count++;
 		});
 		expect(count).toBe(0);
-		const u1 = autorun(() => testCase.get(testCase.existingKey));
+		const u1 = effect(() => testCase.get(testCase.existingKey));
 		u1();
 		expect(count).toBe(0);
-		const u2 = autorun(() => testCase.get(testCase.notExistingKey));
+		const u2 = effect(() => testCase.get(testCase.notExistingKey));
 		u2();
 		expect(count).toBe(0);
-		const u3 = autorun(() => testCase.get(testCase.notExistingKey));
+		const u3 = effect(() => testCase.get(testCase.notExistingKey));
 		testCase.add(testCase.notExistingKey, 1);
 		u3();
 		expect(count).toBe(1);
@@ -217,15 +218,15 @@ test("computed accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
 	let countObserved = 0;
 	let countUnObserved = 0;
 
-	const o = observable.box(0);
-	const c = computed(() => o.get());
+	const [get, set] = signal(0);
+	const c = computed(() => get());
 	onBecomeObserved(c, () => countObserved++);
 	onBecomeUnobserved(c, () => countUnObserved++);
 	expect(countObserved).toBe(0);
 	expect(countUnObserved).toBe(0);
 
-	const u = autorun(() => {
-		c.get();
+	const u = effect(() => {
+		c();
 	});
 
 	expect(countObserved).toBe(1);
@@ -236,8 +237,8 @@ test("computed accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
 	expect(countObserved).toBe(1);
 	expect(countUnObserved).toBe(1);
 
-	const u2 = autorun(() => {
-		c.get();
+	const u2 = effect(() => {
+		c();
 	});
 
 	expect(countObserved).toBe(2);
@@ -248,21 +249,21 @@ test("computed accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
 	expect(countObserved).toBe(2);
 	expect(countUnObserved).toBe(2);
 
-	const bool = observable.box(true);
+	const [getBool, setBool] = signal(true);
 
-	autorun(() => {
-		bool.get() && c.get();
+	effect(() => {
+		getBool() && c();
 	});
 
 	expect(countObserved).toBe(3);
 	expect(countUnObserved).toBe(2);
 
-	bool.set(false);
+	setBool(false);
 
 	expect(countObserved).toBe(3);
 	expect(countUnObserved).toBe(3);
 
-	bool.set(true);
+	setBool(true);
 
 	expect(countObserved).toBe(4);
 	expect(countUnObserved).toBe(3);
@@ -275,23 +276,23 @@ test("computed calls `onBecomeObserved` / `onBecomeUnobserved` after completed a
 	let c2Observed = 0;
 	let c2Unobserved = 0;
 
-	const o = observable.box(1);
+	const o = observable({ value: 1 });
 
 	onBecomeObserved(o, () => oObserved++);
 	onBecomeUnobserved(o, () => oUnobserved++);
 
-	const c1 = computed(() => o.get() * 2);
+	const c1 = computed(() => o.value * 2);
 	onBecomeObserved(c1, () => c1Observed++);
 	onBecomeUnobserved(c1, () => c1Unobserved++);
 
-	const c2 = computed(() => c1.get() * 2, {});
+	const c2 = computed(() => c1() * 2, {});
 
 	onBecomeObserved(c2, () => c2Observed++);
 	onBecomeUnobserved(c2, () => c2Unobserved++);
 
 	runInAction(() => {
-		o.set(2);
-		expect(c2.get()).toBe(8);
+		o.value = 2;
+		expect(c2()).toBe(8);
 	});
 
 	expect(oObserved).toBe(1);
@@ -304,27 +305,27 @@ test("computed calls `onBecomeObserved` / `onBecomeUnobserved` after completed a
 
 test("computed calls `onBecomeObserved` / `onBecomeUnobserved` in a computed derivation", () => {
 	let count = 0;
-	const o = observable.box(1);
+	const o = observable({ value: 1 });
 	onBecomeObserved(o, () => count++);
 	onBecomeUnobserved(o, () => count++);
-	const c1 = computed(() => o.get() * 2);
+	const c1 = computed(() => o.value * 2);
 	onBecomeObserved(c1, () => count++);
 	onBecomeUnobserved(c1, () => count++);
 
-	const c2 = computed(() => o.get());
+	const c2 = computed(() => o.value);
 	onBecomeObserved(c2, () => count++);
 	onBecomeUnobserved(c2, () => count++);
 
-	const c3 = computed(() => c1.get() * 2 > 0 && c2.get(), {
+	const c3 = computed(() => c1() * 2 > 0 && c2(), {
 		keepAlive: true,
 	});
 
 	onBecomeObserved(c3, () => count++);
 	onBecomeUnobserved(c3, () => count++);
 
-	expect(c3.get()).toBe(1);
-	o.set(0);
-	expect(c3.get()).toBe(false);
+	expect(c3()).toBe(1);
+	o.value = 0;
+	expect(c3()).toBe(false);
 
 	expect(count).toBe(4);
 });
@@ -332,13 +333,13 @@ test("computed calls `onBecomeObserved` / `onBecomeUnobserved` in a computed der
 test("calls unBecomeObserved/onBecomeUnobserved to nodes observed by keepAlive computed", () => {
 	let count = 0;
 	let deriveCount = 0;
-	const o = observable.box(1);
+	const o = observable({ value: 1 });
 	onBecomeObserved(o, () => count++);
 	onBecomeUnobserved(o, () => count++);
 	const c = computed(
 		() => {
 			deriveCount++;
-			return o.get() * 2;
+			return o.value * 2;
 		},
 		{
 			keepAlive: true,
@@ -348,10 +349,10 @@ test("calls unBecomeObserved/onBecomeUnobserved to nodes observed by keepAlive c
 	onBecomeUnobserved(c, () => count++);
 
 	// derive the computed first so that it's cached
-	c.get();
+	c();
 
 	expect(count).toBe(1);
-	const u = autorun(() => c.get()); // should be observed now
+	const u = effect(() => c()); // should be observed now
 	u();
 
 	expect(count).toBe(3);
@@ -362,14 +363,14 @@ test("observable box accepts a onBecomeObserved/onBecomeUnobserved callbacks", (
 	let countObserved = 0;
 	let countUnObserved = 0;
 
-	const o = observable.box(0);
+	const o = observable({ value: 0 });
 	onBecomeObserved(o, () => countObserved++);
 	onBecomeUnobserved(o, () => countUnObserved++);
 	expect(countObserved).toBe(0);
 	expect(countUnObserved).toBe(0);
 
-	const u = autorun(() => {
-		o.get();
+	const u = effect(() => {
+		o.value;
 	});
 
 	expect(countObserved).toBe(1);
@@ -380,8 +381,8 @@ test("observable box accepts a onBecomeObserved/onBecomeUnobserved callbacks", (
 	expect(countObserved).toBe(1);
 	expect(countUnObserved).toBe(1);
 
-	const u2 = autorun(() => {
-		o.get();
+	const u2 = effect(() => {
+		o.value;
 	});
 
 	expect(countObserved).toBe(2);
@@ -394,7 +395,7 @@ test("observable box accepts a onBecomeObserved/onBecomeUnobserved callbacks", (
 });
 
 test("onObservedStateChange can be unsubed within the callback", () => {
-	const o = observable.box(1);
+	const o = observable({ value: 0 });
 	let count = 0;
 	const unsub = onObservedStateChange(o, () => {
 		count++;
@@ -403,15 +404,15 @@ test("onObservedStateChange can be unsubed within the callback", () => {
 		}
 	});
 
-	const u = autorun(() => o.get());
+	const u = effect(() => o.value);
 	expect(count).toBe(1);
 	u();
 	expect(count).toBe(2);
-	const u2 = autorun(() => o.get());
+	const u2 = effect(() => o.value);
 	expect(count).toBe(3);
 	u2();
 	expect(count).toBe(4);
-	const u3 = autorun(() => o.get());
+	const u3 = effect(() => o.value);
 	expect(count).toBe(4);
 	u3();
 	expect(count).toBe(4);
@@ -428,7 +429,7 @@ test("onObservedStateChange works with computed getters on objects", () => {
 
 	onObservedStateChange(o, "comp", () => count++);
 	expect(count).toBe(0);
-	const unsub = autorun(() => o.comp);
+	const unsub = effect(() => o.comp);
 	expect(count).toBe(1);
 	unsub();
 	expect(count).toBe(2);
@@ -447,7 +448,7 @@ test("[mobx-test] ensure onBecomeObserved and onBecomeUnobserved are only called
 	expect(start).toBe(0);
 	expect(stop).toBe(0);
 
-	let d = autorun(() => {
+	let d = effect(() => {
 		runs++;
 		expect(a.reportObserved()).toBe(true);
 		expect(start).toBe(1);
@@ -472,7 +473,7 @@ test("[mobx-test] ensure onBecomeObserved and onBecomeUnobserved are only called
 	expect(start).toBe(1);
 	expect(stop).toBe(1);
 
-	d = autorun(() => {
+	d = effect(() => {
 		expect(a.reportObserved()).toBe(true);
 		expect(start).toBe(2);
 		a.reportObserved();

@@ -1,5 +1,5 @@
 import {
-	autorun,
+	effect,
 	observable,
 	isObservable,
 	reaction,
@@ -25,7 +25,7 @@ test("only reacts to accessed values", () => {
 	let count = 0;
 
 	const s = set();
-	autorun(() => {
+	effect(() => {
 		s.has(1);
 		count++;
 	});
@@ -46,7 +46,7 @@ test("set.forEach is reactive", () => {
 	let c = 0;
 	const s = set();
 
-	autorun(() => {
+	effect(() => {
 		s.forEach(() => {});
 		c++;
 	});
@@ -172,7 +172,7 @@ test("does not trigger a change when same observable is set on set initialized w
 	const s = set(new Set([o1, o2]));
 
 	let count = 0;
-	autorun(() => {
+	effect(() => {
 		s.forEach(() => {});
 		count++;
 	});
@@ -194,7 +194,7 @@ test("WeakSet is reactive", () => {
 	const target = {};
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		s.has(target);
 	});
@@ -314,10 +314,10 @@ test("[mobx-test] observe value", function () {
 	let hasX = false;
 	let hasY = false;
 
-	autorun(function () {
+	effect(function () {
 		hasX = s.has("x");
 	});
-	autorun(function () {
+	effect(function () {
 		hasY = s.has("y");
 	});
 
@@ -335,13 +335,13 @@ test("[mobx-test] observe collections", function () {
 	const x = set();
 	let ks, values, entries;
 
-	autorun(function () {
+	effect(function () {
 		ks = keys(x);
 	});
-	autorun(function () {
+	effect(function () {
 		values = Array.from(x.values());
 	});
-	autorun(function () {
+	effect(function () {
 		entries = Array.from(x.entries());
 	});
 
@@ -382,7 +382,7 @@ test("[mobx-test] cleanup", function () {
 
 	let hasA;
 
-	autorun(function () {
+	effect(function () {
 		hasA = s.has("a");
 	});
 
@@ -417,7 +417,7 @@ test("[mobx-test] set should support iterable ", () => {
 test("[mobx-test] set.clear should not be tracked", () => {
 	const x = set(new Set([1]));
 	let c = 0;
-	const d = autorun(() => {
+	const d = effect(() => {
 		c++;
 		x.clear();
 	});

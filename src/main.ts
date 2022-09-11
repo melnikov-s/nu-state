@@ -1,11 +1,12 @@
-import autorun from "./api/autorun";
+import effect from "./api/effect";
 import computed, { Computed, ComputedOptions } from "./api/computed";
 import listener, { Listener } from "./api/listener";
 import atom, { Atom } from "./api/atom";
-import observable, { ObservableBox, ObservableOptions } from "./api/observable";
+import observable, { ObservableOptions } from "./api/observable";
 import reaction from "./api/reaction";
 import action from "./api/action";
 import decorate from "./api/decorate";
+import signal, { Signal, SignalOptions } from "./api/signal";
 import graph, {
 	Graph,
 	enforceActions,
@@ -23,20 +24,21 @@ import graph, {
 	forceObserve,
 	forceChange,
 } from "./api/graph";
-import { getObservableSource, isObservable } from "./types/utils/lookup";
-import { observe } from "./types/utils/observe";
-import { Configuration } from "./types/utils/configuration";
-import { getAdministration } from "./types/utils/lookup";
+import { getObservableSource, isObservable } from "./observables/utils/lookup";
+import { observe } from "./observables/utils/observe";
+import { Configuration } from "./observables/utils/configuration";
+import { getAdministration } from "./observables/utils/lookup";
 import { Scheduler, createScheduler } from "./api/scheduler";
 import Observable from "./api/ObservableClass";
 
 export {
 	action,
 	atom,
-	autorun,
+	effect,
 	batch,
 	computed,
 	createScheduler,
+	signal,
 	decorate,
 	enforceActions,
 	forceChange,
@@ -69,7 +71,8 @@ export type {
 	Configuration,
 	Graph,
 	Listener,
-	ObservableBox,
+	Signal,
+	SignalOptions,
 	ObservableOptions,
 	Scheduler,
 };
@@ -82,4 +85,4 @@ export type {
 	UpdateArrayEvent,
 	SpliceArrayEvent,
 	MutationListener,
-} from "./types/utils/observe";
+} from "./observables/utils/observe";

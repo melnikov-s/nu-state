@@ -1,10 +1,11 @@
 import {
 	observable,
 	computed,
-	autorun,
+	effect,
 	atom,
 	runInAction,
 	onObservedStateChange,
+	signal,
 } from "../src/main";
 
 const createValueAtom = (v, onBecomeObservedCb?, onBecomeUnobservedCb?) => {
@@ -34,12 +35,12 @@ test("can be observed", () => {
 		return a.get() * 2;
 	});
 
-	autorun(() => c.get());
+	effect(() => c());
 	expect(count).toBe(1);
-	expect(c.get()).toBe(2);
+	expect(c()).toBe(2);
 	expect(count).toBe(1);
 	a.set(2);
-	expect(c.get()).toBe(4);
+	expect(c()).toBe(4);
 	expect(count).toBe(2);
 });
 
@@ -47,17 +48,17 @@ test("will trigger onBecomeObserved when observation starts", () => {
 	let count = 0;
 	const a = createValueAtom(1, () => count++);
 	const c = computed(() => a.get());
-	c.get();
+	c();
 	expect(count).toBe(1);
-	const u = autorun(() => c.get());
-	const u2 = autorun(() => a.get());
+	const u = effect(() => c());
+	const u2 = effect(() => a.get());
 	expect(count).toBe(2);
 	u();
-	c.get();
+	c();
 	expect(count).toBe(2);
 	u2();
 	expect(count).toBe(2);
-	autorun(() => c.get());
+	effect(() => c());
 	expect(count).toBe(3);
 });
 
@@ -65,16 +66,16 @@ test("will trigger onBecomeUnobserved when observation ends (listener unsubscrib
 	let count = 0;
 	const a = createValueAtom(1, null, () => count++);
 	const c = computed(() => a.get());
-	c.get();
+	c();
 	expect(count).toBe(1);
-	let u = autorun(() => c.get());
-	const u2 = autorun(() => a.get());
+	let u = effect(() => c());
+	const u2 = effect(() => a.get());
 	expect(count).toBe(1);
 	u();
 	expect(count).toBe(1);
 	u2();
 	expect(count).toBe(2);
-	u = autorun(() => c.get());
+	u = effect(() => c());
 	expect(count).toBe(2);
 	u();
 	expect(count).toBe(3);
@@ -82,22 +83,22 @@ test("will trigger onBecomeUnobserved when observation ends (listener unsubscrib
 
 test("will trigger onBecomeUnobserved when observation ends (computed unsubscribe)", () => {
 	let count = 0;
-	const o = observable.box(true);
+	const [get, set] = signal(true);
 	const a = createValueAtom(1, null, () => count++);
-	const c = computed(() => o.get() && a.get());
-	const c2 = computed(() => c.get());
-	c2.get();
+	const c = computed(() => get() && a.get());
+	const c2 = computed(() => c());
+	c2();
 	expect(count).toBe(1);
-	autorun(() => c2.get());
+	effect(() => c2());
 	expect(count).toBe(1);
-	o.set(false);
+	set(false);
 	expect(count).toBe(2);
 });
 
 test("will return a boolean indicating if atom is observed when invoking `reportObserved`", () => {
 	const a = atom();
 	expect(a.reportObserved()).toBe(false);
-	const u = autorun(() => expect(a.reportObserved()).toBe(true));
+	const u = effect(() => expect(a.reportObserved()).toBe(true));
 	expect(a.reportObserved()).toBe(true);
 	u();
 	expect(a.reportObserved()).toBe(false);
@@ -107,56 +108,56 @@ test("will not trigger listeners unless 'reportChanged' is called", () => {
 	let count = 0;
 
 	const a = createValueAtom(1);
-	const o = observable.box(1);
+	const [get, set] = signal(1);
 	const c = computed(() => ({
 		n: a.get(),
-		o: o.get(),
+		o: get(),
 	}));
 
-	autorun(() => {
+	effect(() => {
 		count++;
-		c.get();
+		c();
 	});
 
 	expect(count).toBe(1);
 	runInAction(() => {
-		o.set(2);
-		o.set(1);
+		set(2);
+		set(1);
 	});
 
 	expect(count).toBe(1);
 });
 
 test("unoptimizable subscriptions are diffed correctly", () => {
-	const a = observable.box(1);
-	const b = observable.box(1);
+	const [getA, setA] = signal(1);
+	const [getB, setB] = signal(1);
 	const c = computed(() => {
-		a.get();
+		getA();
 		return 3;
 	});
 	let called = 0;
 	let val = 0;
 
-	const d = autorun(() => {
+	const d = effect(() => {
 		called++;
-		a.get();
-		c.get(); // reads a as well
-		val = a.get();
+		getA();
+		c(); // reads a as well
+		val = getA();
 		if (
-			b.get() === 1 // only on first run
+			getB() === 1 // only on first run
 		)
-			a.get(); // second run: one read less for a
+			getA(); // second run: one read less for a
 	});
 
 	expect(called).toBe(1);
 	expect(val).toBe(1);
 
-	b.set(2);
+	setB(2);
 
 	expect(called).toBe(2);
 	expect(val).toBe(1);
 
-	a.set(2);
+	setA(2);
 
 	expect(called).toBe(3);
 	expect(val).toBe(2);
@@ -169,7 +170,7 @@ test("can set a custom equals method", () => {
 
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		a.reportObserved();
 	});

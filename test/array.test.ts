@@ -1,6 +1,6 @@
 import {
 	computed,
-	autorun,
+	effect,
 	reaction,
 	observable,
 	observe,
@@ -50,7 +50,7 @@ test("sort parameters are observable", () => {
 		const arrA = array([{}, lookup, {}, {}, lookup, frozen]);
 		const arrB = array([{}, observedLookup, frozen]);
 
-		autorun(() => {
+		effect(() => {
 			count++;
 			expect(arrA[method](lookup)).toBe(negativeValue);
 			expect(arrA[method](observedLookup)).not.toBe(negativeValue);
@@ -73,7 +73,7 @@ test("sort parameters are observable", () => {
 		const arr = array([1, 2, 3]);
 		const realArr = [1, 2, 3];
 
-		autorun(() => {
+		effect(() => {
 			count++;
 
 			expect(arr[method]("en")).toBe(realArr[method]("en"));
@@ -91,7 +91,7 @@ test("sort parameters are observable", () => {
 		const realArr = [[{}], 2, 3, 4];
 		const arr = array([[{}], 2, 3, 4]);
 
-		autorun(() => {
+		effect(() => {
 			count++;
 			const result = arr[method]();
 
@@ -121,7 +121,7 @@ test("sort parameters are observable", () => {
 		const arr = array([{}, {}, {}]);
 		const context = {};
 
-		autorun(() => {
+		effect(() => {
 			let ran = false;
 			count++;
 
@@ -157,7 +157,7 @@ test("sort parameters are observable", () => {
 		let count = 0;
 		const arr = array([{}, {}, {}]);
 
-		autorun(() => {
+		effect(() => {
 			let ran = false;
 			count++;
 
@@ -348,30 +348,30 @@ test("[mobx-test] basic functionality", function () {
 		);
 	});
 
-	expect(sum.get()).toBe(3);
+	expect(sum()).toBe(3);
 
 	a[1] = 3;
 	expect(a.length).toBe(2);
 	expect(a.slice()).toEqual([1, 3]);
-	expect(sum.get()).toBe(4);
+	expect(sum()).toBe(4);
 
 	a.splice(1, 1, 4, 5);
 	expect(a.length).toBe(3);
 	expect(a.slice()).toEqual([1, 4, 5]);
-	expect(sum.get()).toBe(10);
+	expect(sum()).toBe(10);
 
 	a.splice(1, 1);
-	expect(sum.get()).toBe(6);
+	expect(sum()).toBe(6);
 	expect(a.slice()).toEqual([1, 5]);
 
 	a.length = 4;
-	expect(isNaN(sum.get())).toBe(true);
+	expect(isNaN(sum())).toBe(true);
 	expect(a.length).toEqual(4);
 
 	expect(a.slice()).toEqual([1, 5, undefined, undefined]);
 
 	a.length = 2;
-	expect(sum.get()).toBe(6);
+	expect(sum()).toBe(6);
 	expect(a.slice()).toEqual([1, 5]);
 
 	expect(a.slice().reverse()).toEqual([5, 1]);
@@ -509,7 +509,7 @@ test("[mobx-test] stringifies same as ecma array", function () {
 test("[mobx-test] observes when stringified", function () {
 	const x = array([]);
 	let c = 0;
-	autorun(function () {
+	effect(function () {
 		x.toString();
 		c++;
 	});
@@ -520,7 +520,7 @@ test("[mobx-test] observes when stringified", function () {
 test("[mobx-test] observes when stringified to locale", function () {
 	const x = array([]);
 	let c = 0;
-	autorun(function () {
+	effect(function () {
 		x.toLocaleString();
 		c++;
 	});
@@ -535,8 +535,8 @@ test("[mobx-test] react to sort changes", function () {
 	});
 	let sorted;
 
-	autorun(function () {
-		sorted = sortedX.get();
+	effect(function () {
+		sorted = sortedX();
 	});
 
 	expect(x.slice()).toEqual([4, 2, 3]);
@@ -552,7 +552,7 @@ test("[mobx-test] react to sort changes", function () {
 test("[mobx-test] autoextend buffer length", function () {
 	const ar = array(new Array(1000));
 	let changesCount = 0;
-	autorun(() => (ar.length, ++changesCount));
+	effect(() => (ar.length, ++changesCount));
 
 	ar[ar.length] = 0;
 	ar.push(0);

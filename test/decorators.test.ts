@@ -1,5 +1,5 @@
 import {
-	autorun,
+	effect,
 	observable,
 	computed,
 	enforceActions,
@@ -24,7 +24,7 @@ test("properties can be configured with a decorator", () => {
 	let count = 0;
 	const o = new C();
 
-	autorun(() => {
+	effect(() => {
 		o.comp;
 		count++;
 	});
@@ -115,7 +115,7 @@ test("observable decorators can be further configured with options", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.comp;
 		count++;
 	});

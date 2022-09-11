@@ -1,8 +1,18 @@
 import CoreGraph, { ObservableNode } from "../core/graph";
-import { getAdministration, isObservable } from "../types/utils/lookup";
+import { getAdministration, isObservable } from "../observables/utils/lookup";
 import AtomNode from "../core/nodes/atom";
 import ComputedNode from "../core/nodes/computed";
-import ObservableValue from "../types/observableValue";
+import Signal from "../observables/signal";
+
+const nodeMap = new WeakMap();
+
+export function setNode(value: object, node: object): void {
+	nodeMap.set(value, node);
+}
+
+export function getNode(value: object): any {
+	return nodeMap.get(value);
+}
 
 export type Graph = {
 	enforceActions: (enforce: boolean) => void;
@@ -44,15 +54,17 @@ export function enforceActions(enforce: boolean): void {
 }
 
 export function isObserved(
-	observable: unknown,
+	observable: object,
 	{ graph = defaultGraph } = {}
 ): boolean {
-	if (observable instanceof AtomNode || observable instanceof ComputedNode) {
-		return graph.isObserved(observable as ObservableNode);
-	} else if (observable instanceof ObservableValue) {
-		return graph.isObserved(observable.atom);
-	} else if (isObservable(observable)) {
-		const adm = getAdministration(observable as object);
+	const target = getNode(observable) ?? observable;
+
+	if (target instanceof AtomNode || target instanceof ComputedNode) {
+		return graph.isObserved(target as ObservableNode);
+	} else if (target instanceof Signal) {
+		return graph.isObserved(target.atom);
+	} else if (isObservable(target)) {
+		const adm = getAdministration(target as object);
 		return graph.isObserved(adm.atom);
 	}
 
@@ -94,7 +106,7 @@ export function getObservableSource<T extends object>(obj: T): T {
 
 export function forceChange<T extends object>(...args: T[]): void {
 	for (let i = 0; i < args.length; i++) {
-		const adm = getAdministration(args[i]);
+		const adm = getAdministration(getNode(args[i]) ?? args[i]);
 		if (!adm) {
 			throw new Error(`forceChange called on an invalid object`);
 		}
@@ -104,7 +116,7 @@ export function forceChange<T extends object>(...args: T[]): void {
 
 export function forceObserve<T extends object>(...args: T[]): void {
 	for (let i = 0; i < args.length; i++) {
-		const adm = getAdministration(args[i]);
+		const adm = getAdministration(getNode(args[i]) ?? args[i]);
 		if (!adm) {
 			throw new Error(`forceObserve called on an invalid object`);
 		}
@@ -140,6 +152,8 @@ export function onObservedStateChange<T extends object>(
 	keyOrCallback: unknown | (() => void),
 	callback?: (observing: boolean) => void
 ): () => void {
+	const target = getNode(obj) ?? obj;
+
 	const cb =
 		typeof keyOrCallback === "function"
 			? (keyOrCallback as () => void)
@@ -147,9 +161,9 @@ export function onObservedStateChange<T extends object>(
 	const key = callback ? keyOrCallback : undefined;
 
 	if (
-		obj instanceof ObservableValue ||
-		obj instanceof ComputedNode ||
-		obj instanceof AtomNode
+		target instanceof Signal ||
+		target instanceof ComputedNode ||
+		target instanceof AtomNode
 	) {
 		if (key) {
 			throw new Error(
@@ -157,19 +171,19 @@ export function onObservedStateChange<T extends object>(
 			);
 		}
 
-		return obj.graph.onObservedStateChange(
-			(obj as any).atom || (obj as any),
+		return target.graph.onObservedStateChange(
+			(target as any).atom || (target as any),
 			cb
 		);
 	}
 
-	if (!isObservable(obj)) {
+	if (!isObservable(target)) {
 		throw new Error(
 			`onObservedStateChange can only be called on observable values`
 		);
 	}
 
-	const adm = getAdministration(obj);
+	const adm = getAdministration(target);
 
 	return adm.onObservedStateChange(cb, key as PropertyKey);
 }

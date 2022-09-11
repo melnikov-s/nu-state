@@ -1,24 +1,17 @@
-import ObservableValue from "../types/observableValue";
 import { resolveGraph, Graph } from "./graph";
-import { defaultEquals, isNonPrimitive, isPropertyKey } from "../utils";
+import { isNonPrimitive, isPropertyKey } from "../utils";
 import {
 	getObservable,
 	getCtorConfiguration,
 	getObservableWithConfig,
-} from "../types/utils/lookup";
+} from "../observables/utils/lookup";
 import {
 	Configuration,
 	ConfigurationGetter,
 	propertyType,
 	getOpts,
 	withDefaultConfig,
-} from "../types/utils/configuration";
-
-export type ObservableBox<T> = {
-	equals: (value: T) => boolean;
-	get: () => T;
-	set: (newValue: T) => T;
-};
+} from "../observables/utils/configuration";
 
 export type ObservableOptions = {
 	graph?: Graph;
@@ -27,17 +20,6 @@ export type ObservableOptions = {
 type ObservableOptionsConfigure = ObservableOptions & {
 	withDefaults?: boolean;
 };
-
-function observableBox<T>(
-	initialValue: T,
-	opts?: ObservableOptions & { equals?: typeof defaultEquals }
-): ObservableBox<T> {
-	return new ObservableValue<T>(
-		initialValue,
-		resolveGraph(opts?.graph),
-		opts?.equals
-	);
-}
 
 function observableConfigure<T extends object, S extends T>(
 	config: Configuration<T> | ConfigurationGetter<S>,
@@ -85,7 +67,7 @@ function observable<T>(...args: unknown[]): unknown {
 		const primitive = !isNonPrimitive(object);
 		if (primitive) {
 			throw new Error(
-				`observable is only for non primitive values. Got ${typeof object} instead. Use observable.box for primitive values.`
+				`observable is only for non primitive values. Got ${typeof object} instead. Use \`signal\` for primitive values.`
 			);
 		}
 
@@ -95,12 +77,10 @@ function observable<T>(...args: unknown[]): unknown {
 
 Object.assign(observable, propertyType.observable);
 
-observable.box = observableBox;
 observable.configure = observableConfigure;
 observable.opts = getOpts(propertyType.observable);
 
 export default observable as typeof observable & {
-	box: typeof observableBox;
 	configure: typeof observableConfigure;
 	opts: typeof observable.opts;
 } & typeof propertyType.observable;

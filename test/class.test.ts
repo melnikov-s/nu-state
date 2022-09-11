@@ -1,5 +1,5 @@
 import {
-	autorun,
+	effect,
 	observable,
 	isObservable,
 	enforceActions,
@@ -30,7 +30,7 @@ test("objects create from class have observable properties", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.value;
 		count++;
 	});
@@ -68,7 +68,7 @@ test("object methods occur in an action ", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.valueA;
 		o.valueB;
 		count++;
@@ -90,7 +90,7 @@ test("object methods are observable", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.readValue();
 		count++;
 	});
@@ -115,7 +115,7 @@ test("object setters occur in an action", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.valueA;
 		o.valueB;
 		count++;
@@ -145,7 +145,7 @@ test("object getters and setters on same property", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.values;
 		count++;
 	});
@@ -179,7 +179,7 @@ test("object getters are observable", () => {
 	const o = new C();
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		o.readValue;
 		count++;
 	});
@@ -232,7 +232,7 @@ test("properties can be configured to be observable", () => {
 	let count = 0;
 	const o = new C();
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		o.valueA;
 		o.valueB;
@@ -256,7 +256,7 @@ test("unconfigured values are not observed", () => {
 	const o = new C();
 
 	expect(isObservable(o.value)).toBe(false);
-	autorun(() => {
+	effect(() => {
 		count++;
 		o.value;
 		"value" in o;
@@ -279,7 +279,7 @@ test("properties can be configured to be observable refs", () => {
 	let count = 0;
 	const o = new C();
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		o.value;
 	});
@@ -314,7 +314,7 @@ test("properties can be further configured", () => {
 	let count = 0;
 	const o = new C();
 
-	autorun(() => {
+	effect(() => {
 		count++;
 		o.value.comp;
 	});
@@ -348,7 +348,7 @@ test("properties can be configured to be computed", () => {
 	let count = 0;
 	const o = new C();
 
-	autorun(() => {
+	effect(() => {
 		o.comp;
 		count++;
 	});
@@ -412,7 +412,7 @@ test("properties can be configured to be actions", () => {
 	enforceActions(true);
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		c.valueA;
 		c.valueB;
 		count++;
@@ -447,7 +447,7 @@ test("properties can be configured to be bound actions", () => {
 		let count = 0;
 		const o = new O();
 
-		autorun(() => {
+		effect(() => {
 			o.val;
 			count++;
 		});
@@ -485,7 +485,7 @@ test("properties can be configured to be async actions", async () => {
 	enforceActions(true);
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		c.valueA;
 		c.valueB;
 		count++;
@@ -527,7 +527,7 @@ test("configure with inherited class", () => {
 	enforceActions(true);
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		c.comp;
 		count++;
 	});
@@ -569,7 +569,7 @@ test("configure with inherited class (super)", () => {
 	enforceActions(true);
 	let count = 0;
 
-	autorun(() => {
+	effect(() => {
 		c.comp;
 		count++;
 	});
