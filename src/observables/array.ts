@@ -47,6 +47,14 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 		return true;
 	}
+	protected reportObserveDeep(): void {
+		for (let i = 0; i < this.source.length; i++) {
+			const result = this.get(i);
+			if (result) {
+				getAdministration(result)?.reportObserved();
+			}
+		}
+	}
 
 	get(index: number): T | undefined {
 		this.atom.reportObserved();
@@ -63,11 +71,9 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 			const changed = targetValue !== oldValue;
 			if (changed) {
-				this.graph.batch(() => {
-					values[index] = targetValue;
-					this.atom.reportChanged();
-					notifyArrayUpdate(this.proxy, index, oldValue, targetValue);
-				});
+				values[index] = targetValue;
+				notifyArrayUpdate(this.proxy, index, oldValue, targetValue);
+				this.onArrayChanged();
 			}
 		} else if (index === values.length) {
 			// add a new item
@@ -119,10 +125,8 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		const res = this.spliceItemsIntoValues(index, deleteCount, newTargetItems);
 
 		if (deleteCount !== 0 || newTargetItems.length !== 0) {
-			this.graph.batch(() => {
-				this.atom.reportChanged();
-				notifySpliceArray(this.proxy, index, newTargetItems, res);
-			});
+			notifySpliceArray(this.proxy, index, newTargetItems, res);
+			this.onArrayChanged();
 		}
 
 		return res;
@@ -138,6 +142,13 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 			([index, deleteCount] as any).concat(newItems)
 		);
 	}
+
+	onArrayChanged(): void {
+		this.graph.batch(() => {
+			this.atom.reportChanged();
+			this.flushChange();
+		});
+	}
 }
 
 const arrayMethods: any = {
@@ -149,7 +160,7 @@ const arrayMethods: any = {
 	): T[] {
 		const adm = getAdministration(this);
 		adm.source.fill(value, start, end);
-		adm.atom.reportChanged();
+		adm.onArrayChanged();
 
 		return this;
 	},
@@ -200,14 +211,14 @@ const arrayMethods: any = {
 
 		adm.source.reverse();
 
-		adm.atom.reportChanged();
+		adm.onArrayChanged();
 
 		return this;
 	},
 
 	sort<T>(this: T[], compareFn?: ((a: T, b: T) => number) | undefined): T[] {
 		const adm = getAdministration(this);
-		adm.atom.reportChanged();
+		adm.onArrayChanged();
 
 		adm.source.sort(
 			compareFn &&

@@ -90,15 +90,8 @@ export function withDefaultConfig<T extends object>(
 
 		if (typeof config === "function") {
 			result = config(key, proxy);
-			if (!result) {
-				result = defaultConfigGetter(key, proxy);
-			}
-		} else {
-			if (Object.prototype.hasOwnProperty.call(config, key)) {
-				result = config[key];
-			} else {
-				result = defaultConfigGetter(key, proxy);
-			}
+		} else if (Object.prototype.hasOwnProperty.call(config, key)) {
+			result = config[key];
 		}
 
 		return result;

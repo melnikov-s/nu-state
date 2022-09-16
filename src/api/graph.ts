@@ -104,24 +104,27 @@ export function getObservableSource<T extends object>(obj: T): T {
 	return adm?.source;
 }
 
-export function forceChange<T extends object>(...args: T[]): void {
-	for (let i = 0; i < args.length; i++) {
-		const adm = getAdministration(getNode(args[i]) ?? args[i]);
-		if (!adm) {
-			throw new Error(`forceChange called on an invalid object`);
-		}
-		adm.forceChange();
+export function reportChanged<T extends object>(obj: T): T {
+	const adm = getAdministration(obj);
+	if (!adm) {
+		throw new Error(`reportChanged called on an invalid object`);
 	}
+	adm.reportChanged();
+
+	return obj;
 }
 
-export function forceObserve<T extends object>(...args: T[]): void {
-	for (let i = 0; i < args.length; i++) {
-		const adm = getAdministration(getNode(args[i]) ?? args[i]);
-		if (!adm) {
-			throw new Error(`forceObserve called on an invalid object`);
-		}
-		adm.forceObserve();
+export function reportObserved<T extends object>(
+	obj: T,
+	opts?: { deep?: boolean }
+): T {
+	const adm = getAdministration(obj);
+	if (!adm) {
+		throw new Error(`reportObserved called on an invalid object`);
 	}
+	adm.reportObserved(opts?.deep);
+
+	return obj;
 }
 
 export function onReactionsComplete(callback: () => void): () => void {
