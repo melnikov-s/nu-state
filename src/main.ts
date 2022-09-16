@@ -21,8 +21,8 @@ import graph, {
 	onObservedStateChange,
 	onReactionsComplete,
 	task,
-	forceObserve,
-	forceChange,
+	reportObserved,
+	reportChanged,
 } from "./api/graph";
 import { getObservableSource, isObservable } from "./observables/utils/lookup";
 import { observe } from "./observables/utils/observe";
@@ -41,8 +41,8 @@ export {
 	signal,
 	decorate,
 	enforceActions,
-	forceChange,
-	forceObserve,
+	reportChanged,
+	reportObserved,
 	getAdministration,
 	getDefaultGraph,
 	getObservableSource,

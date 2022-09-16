@@ -6,7 +6,6 @@ import { isPropertyKey, getPropertyDescriptor } from "../utils";
 import Administration, { getAdministration } from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../core/nodes/computed";
-import { runInAction } from "../api/graph";
 import {
 	ComputedOptions,
 	Configuration,
@@ -167,10 +166,10 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		return computedNode;
 	}
 
-	forceObserve(): void {
-		super.forceObserve();
+	protected reportObserveDeep(): void {
 		Object.getOwnPropertyNames(this.source).forEach((name) => {
-			getAdministration(this.source[name as keyof T])?.forceObserve();
+			const result = this.read(name as keyof T);
+			getAdministration(result)?.reportObserved();
 		});
 	}
 
@@ -262,18 +261,21 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		}
 		const config = this.getConfig(key);
 
+		// if this property is a setter
+		if (config.type === propertyType.computed.type) {
+			this.graph.runInAction(() => this.set(key, newValue));
+			return;
+		}
+
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getObservableSource(newValue);
 
 		if (!had || oldValue !== targetValue) {
-			if (config.type === propertyType.observable.type) {
-				this.set(key, targetValue);
-			} else {
-				runInAction(() => this.set(key, targetValue));
-			}
+			this.set(key, targetValue);
 
 			this.graph.batch(() => {
+				this.flushChange();
 				if (!had) {
 					this.keysAtom.reportChanged();
 					this.hasMap.reportChanged(key);
@@ -283,7 +285,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				}
 
 				this.valuesMap.reportChanged(key);
-				this.flushChange();
 			});
 		}
 	}
@@ -303,12 +304,12 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		const oldValue = this.get(key);
 		delete this.source[key];
 		this.graph.batch(() => {
+			this.flushChange();
 			this.valuesMap.reportChanged(key);
 			this.keysAtom.reportChanged();
 			this.hasMap.reportChanged(key);
 
 			this.valuesMap.delete(key);
-			this.flushChange();
 			notifyDelete(this.proxy, oldValue, key);
 		});
 	}

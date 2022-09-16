@@ -47,6 +47,22 @@ export class SetAdministration<T>
 		);
 	}
 
+	private onSetChange(value: T): void {
+		this.graph.batch(() => {
+			this.keysAtom.reportChanged();
+			this.hasMap.reportChanged(value);
+			this.flushChange();
+		});
+	}
+
+	protected reportObserveDeep(): void {
+		this.source.forEach((value) => {
+			if (value) {
+				getAdministration(value)?.reportObserved();
+			}
+		});
+	}
+
 	clear(): void {
 		this.graph.batch(() => {
 			this.source.forEach((value) => this.delete(value));
@@ -75,11 +91,8 @@ export class SetAdministration<T>
 		if (!this.hasEntry(value)) {
 			const target = getObservableSource(value);
 			this.source.add(target);
-			this.graph.batch(() => {
-				this.keysAtom.reportChanged();
-				this.hasMap.reportChanged(target);
-				notifyAdd(this.proxy, target);
-			});
+			notifyAdd(this.proxy, target);
+			this.onSetChange(target);
 		}
 
 		return this;
@@ -90,11 +103,8 @@ export class SetAdministration<T>
 			const target = getObservableSource(value);
 			this.source.delete(target);
 			this.source.delete(value);
-			this.graph.batch(() => {
-				this.keysAtom.reportChanged();
-				this.hasMap.reportChanged(target);
-				notifyDelete(this.proxy, target);
-			});
+			notifyDelete(this.proxy, target);
+			this.onSetChange(target);
 
 			return true;
 		}

@@ -101,6 +101,13 @@ export class MapAdministration<K, V>
 			(hasObservable(key) && this.source.has(getObservable(key, this.graph)))
 		);
 	}
+	protected reportObserveDeep(): void {
+		this.source.forEach((value) => {
+			if (value) {
+				getAdministration(value)?.reportObserved();
+			}
+		});
+	}
 
 	has(key: K): boolean {
 		if (this.graph.isTracking()) {
@@ -125,13 +132,13 @@ export class MapAdministration<K, V>
 				oldValue !== getObservable(value, this.graph))
 		) {
 			this.graph.batch(() => {
+				this.flushChange();
 				if (this.data.has(key)) {
 					this.data.set(key, targetValue);
 				} else {
 					this.data.set(targetKey, targetValue);
 				}
 				if (!hasKey) {
-					this.flushChange();
 					this.hasMap.reportChanged(targetKey);
 					this.keysAtom.reportChanged();
 					notifyAdd(this.proxy, targetValue, targetKey);

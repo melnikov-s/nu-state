@@ -44,13 +44,13 @@ export default class Administration<T extends object = object> {
 		}
 	}
 
-	forceChange(): void {
+	reportChanged(): void {
 		this.atom.reportChanged();
 	}
 
-	protected forceObserveProps(): void {}
+	protected reportObserveDeep(): void {}
 
-	forceObserve(): void {
+	reportObserved(deep = true): void {
 		const entry = circularRefSet == null;
 		if (entry) {
 			circularRefSet = new WeakSet();
@@ -66,7 +66,9 @@ export default class Administration<T extends object = object> {
 		}
 		this.forceObservedAtoms.push(atom);
 		atom.reportObserved();
-		this.forceObserveProps();
+		if (deep) {
+			this.reportObserveDeep();
+		}
 
 		if (entry) {
 			circularRefSet = null;

@@ -197,9 +197,9 @@ test("observable objects can be configured with config overwriting defaults", ()
 		expect(o.comp).toBe(4);
 		expect(o.count).toBe(2);
 		o.nonConfiguredAction();
-		expect(count).toBe(3);
+		expect(count).toBe(2);
 		o.nonObservableValue++;
-		expect(count).toBe(3);
+		expect(count).toBe(2);
 	} finally {
 		enforceActions(false);
 	}
@@ -252,7 +252,7 @@ test("observable objects can be configured with function overwriting defaults", 
 		expect(o.comp).toBe(4);
 		expect(o.count).toBe(2);
 		o.nonConfiguredAction();
-		expect(count).toBe(3);
+		expect(count).toBe(2);
 	} finally {
 		enforceActions(false);
 	}
@@ -313,27 +313,12 @@ test("target is updated when observable value updates", () => {
 });
 
 test("observable value is updated when target is updated", () => {
-	let count = 0;
 	const target = {} as any;
 	const o = object(target);
-
-	reaction(
-		() => "prop" in o,
-		() => count++
-	);
-
-	target.prop = "value"; // not observed
-	expect(count).toBe(0);
-	expect(o.prop).toBe("value");
-	o.prop = "value2"; // too late, value already exists
-	expect(count).toBe(0);
-	delete o.prop; // not seen as a change
-	expect(count).toBe(0);
-	o.prop = "value"; // recovered
-	expect(count).toBe(1);
-	delete target.prop;
-	expect("prop" in o).toBe(false);
-	expect(count).toBe(1);
+	o.prop = "value";
+	expect(target.prop).toBe("value");
+	delete o.prop;
+	expect("prop" in target).toBe(false);
 });
 
 test("observable objects are deeply observed", () => {
