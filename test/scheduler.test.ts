@@ -5,6 +5,8 @@ import {
 	Scheduler,
 	isInBatch,
 	signal,
+	createMicroTaskScheduler,
+	createAnimationScheduler,
 } from "../src/main";
 
 const createTimeoutScheduler = (timeout: number = 0): Scheduler =>
@@ -165,6 +167,82 @@ test("can create a sync scheduler", () => {
 	l2.track(() => get());
 	l3.track(() => get());
 	set(1);
+	expect(count).toBe(3);
 	set(2);
 	expect(count).toBe(6);
+});
+
+test("can create a microtask scheduler", async () => {
+	vi.useRealTimers();
+	let count = 0;
+	const runs = [];
+
+	const scheduler = createMicroTaskScheduler();
+	const [get, set] = signal(0);
+	const l = scheduler.listener(() => {
+		count++;
+		runs.push(1);
+	});
+	const l2 = scheduler.listener(() => {
+		count++;
+		runs.push(2);
+	});
+	const l3 = scheduler.listener(() => {
+		count++;
+		runs.push(3);
+	});
+	l.track(() => get());
+	l2.track(() => get());
+	l3.track(() => get());
+	set(1);
+	set(2);
+	set(3);
+	set(4);
+	expect(count).toBe(0);
+	await new Promise((resolve) => setTimeout(resolve, 0));
+	expect(count).toBe(3);
+	expect(runs).toEqual([1, 2, 3]);
+});
+
+test("can create an animation scheduler", () => {
+	let fns = [];
+
+	global.requestAnimationFrame = (fn) => {
+		fns.push(fn);
+		return fns.length;
+	};
+
+	function tick() {
+		fns.forEach((fn) => fn());
+		fns = [];
+	}
+
+	let count = 0;
+	const runs = [];
+
+	const scheduler = createAnimationScheduler();
+	const [get, set] = signal(0);
+	const l = scheduler.listener(() => {
+		count++;
+		runs.push(1);
+	});
+	const l2 = scheduler.listener(() => {
+		count++;
+		runs.push(2);
+	});
+	const l3 = scheduler.listener(() => {
+		count++;
+		runs.push(3);
+	});
+	l.track(() => get());
+	l2.track(() => get());
+	l3.track(() => get());
+	set(1);
+	set(2);
+	set(3);
+	set(4);
+	expect(count).toBe(0);
+	tick();
+	expect(count).toBe(3);
+	expect(runs).toEqual([1, 2, 3]);
 });

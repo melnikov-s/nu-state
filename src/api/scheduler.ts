@@ -135,3 +135,11 @@ export function createScheduler(
 		}
 	}, opts);
 }
+
+export function createMicroTaskScheduler(opts?: { graph?: Graph }): Scheduler {
+	return createScheduler(queueMicrotask, opts);
+}
+
+export function createAnimationScheduler(opts?: { graph?: Graph }): Scheduler {
+	return createScheduler(requestAnimationFrame, opts);
+}
