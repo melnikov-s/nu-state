@@ -1,9 +1,5 @@
 import Graph from "../core/graph";
-import {
-	getAdministration,
-	getObservable,
-	getObservableSource,
-} from "./utils/lookup";
+import { getAdministration, getObservable, source } from "./utils/lookup";
 import { notifyArrayUpdate, notifySpliceArray } from "./utils/observe";
 import Administration from "./utils/Administration";
 
@@ -63,7 +59,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 	set(index: number, newValue: T): void {
 		const values = this.source;
-		const targetValue = getObservableSource(newValue);
+		const targetValue = source(newValue);
 
 		if (index < values.length) {
 			// update at index in range
@@ -110,7 +106,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 		if (newItems) {
 			for (let i = 0; i < newItems.length; i++) {
-				newTargetItems[i] = getObservableSource(newItems[i]);
+				newTargetItems[i] = source(newItems[i]);
 			}
 		}
 

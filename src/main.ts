@@ -24,7 +24,7 @@ import graph, {
 	reportObserved,
 	reportChanged,
 } from "./api/graph";
-import { getObservableSource, isObservable } from "./observables/utils/lookup";
+import { source, isObservable } from "./observables/utils/lookup";
 import { observe } from "./observables/utils/observe";
 import { Configuration } from "./observables/utils/configuration";
 import { getAdministration } from "./observables/utils/lookup";
@@ -50,9 +50,9 @@ export {
 	enforceActions,
 	reportChanged,
 	reportObserved,
-	getAdministration,
+	getAdministration as unstable_getAdministration,
 	getDefaultGraph,
-	getObservableSource,
+	source,
 	graph,
 	isInAction,
 	isInBatch,

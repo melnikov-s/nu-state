@@ -1,10 +1,6 @@
 import Graph from "../core/graph";
 import Atom from "../core/nodes/atom";
-import {
-	getObservable,
-	getObservableSource,
-	getAdministration,
-} from "./utils/lookup";
+import { getObservable, source, getAdministration } from "./utils/lookup";
 import { notifyAdd, notifyDelete } from "./utils/observe";
 import Administration, {
 	getAdministration as hasObservable,
@@ -41,7 +37,7 @@ export class SetAdministration<T>
 
 	private hasEntry(value: T): boolean {
 		return !!(
-			this.source.has(getObservableSource(value)) ||
+			this.source.has(source(value)) ||
 			(hasObservable(value) &&
 				this.source.has(getObservable(value, this.graph)))
 		);
@@ -89,7 +85,7 @@ export class SetAdministration<T>
 
 	add(value: T): this {
 		if (!this.hasEntry(value)) {
-			const target = getObservableSource(value);
+			const target = source(value);
 			this.source.add(target);
 			notifyAdd(this.proxy, target);
 			this.onSetChange(target);
@@ -100,7 +96,7 @@ export class SetAdministration<T>
 
 	delete(value: T): boolean {
 		if (this.hasEntry(value)) {
-			const target = getObservableSource(value);
+			const target = source(value);
 			this.source.delete(target);
 			this.source.delete(value);
 			notifyDelete(this.proxy, target);
@@ -113,7 +109,7 @@ export class SetAdministration<T>
 
 	has(value: T): boolean {
 		if (this.graph.isTracking()) {
-			const target = getObservableSource(value);
+			const target = source(value);
 			this.hasMap.reportObserved(target);
 			this.atom.reportObserved();
 		}
