@@ -28,7 +28,12 @@ import { getObservableSource, isObservable } from "./observables/utils/lookup";
 import { observe } from "./observables/utils/observe";
 import { Configuration } from "./observables/utils/configuration";
 import { getAdministration } from "./observables/utils/lookup";
-import { Scheduler, createScheduler } from "./api/scheduler";
+import {
+	Scheduler,
+	createScheduler,
+	createAnimationScheduler,
+	createMicroTaskScheduler,
+} from "./api/scheduler";
 import Observable from "./api/ObservableClass";
 
 export {
@@ -38,6 +43,8 @@ export {
 	batch,
 	computed,
 	createScheduler,
+	createAnimationScheduler,
+	createMicroTaskScheduler,
 	signal,
 	decorate,
 	enforceActions,
