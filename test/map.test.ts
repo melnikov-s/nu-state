@@ -4,11 +4,9 @@ import {
 	isObservable,
 	reaction,
 	observe,
+	source,
+	unstable_getAdministration,
 } from "../src/main";
-import {
-	getAdministration,
-	getObservableSource,
-} from "../src/observables/utils/lookup";
 
 const map = <K = any, V = any>(obj: Map<K, V> = new Map()): Map<K, V> => {
 	return observable(obj);
@@ -165,8 +163,8 @@ test("map can be initialized with observable values", () => {
 			[o3, o3],
 		])
 	);
-	expect(m.has(getObservableSource(o1))).toBe(true);
-	expect(m.has(getObservableSource(o2))).toBe(true);
+	expect(m.has(source(o1))).toBe(true);
+	expect(m.has(source(o2))).toBe(true);
 	expect(m.has(o1)).toBe(true);
 	expect(m.has(o2)).toBe(true);
 	m.set(o2, o2);
@@ -174,7 +172,7 @@ test("map can be initialized with observable values", () => {
 	expect(m.has(observable(o3))).toBe(true);
 	m.delete(observable(o3));
 	expect(m.size).toBe(2);
-	m.delete(getObservableSource(o1));
+	m.delete(source(o1));
 	expect(m.size).toBe(2);
 	m.delete(o1);
 	expect(m.size).toBe(1);
@@ -202,7 +200,7 @@ test("does not trigger a change when same observable is set on map initialized w
 	expect(m.get(o1)).toBe(o1);
 	m.set(o1, o1);
 	expect(count).toBe(1);
-	m.set(o1, getObservableSource(o1));
+	m.set(o1, source(o1));
 	expect(count).toBe(1);
 	m.set(o1, o2);
 	expect(count).toBe(2);
@@ -422,7 +420,7 @@ test("[mobx-test] cleanup", function () {
 		aValue = x.get("a");
 	});
 
-	const adm = getAdministration(x);
+	const adm = unstable_getAdministration(x);
 
 	let observable = adm.data.atomMap.get("a");
 

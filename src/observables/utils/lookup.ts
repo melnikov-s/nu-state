@@ -76,7 +76,7 @@ export function setCtorConfiguration<T>(
 	return finalConfig;
 }
 
-export function getObservableSource<T>(obj: T): T {
+export function source<T>(obj: T): T {
 	const adm = getAdm(obj);
 
 	return adm ? (adm.source as unknown as T) : obj;

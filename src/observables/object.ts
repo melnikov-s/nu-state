@@ -1,6 +1,6 @@
 import Atom from "../core/nodes/atom";
 import Graph from "../core/graph";
-import { getObservable, getObservableSource, getAction } from "./utils/lookup";
+import { getObservable, source, getAction } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
 import { isPropertyKey, getPropertyDescriptor } from "../utils";
 import Administration, { getAdministration } from "./utils/Administration";
@@ -269,7 +269,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
-		const targetValue = getObservableSource(newValue);
+		const targetValue = source(newValue);
 
 		if (!had || oldValue !== targetValue) {
 			this.set(key, targetValue);

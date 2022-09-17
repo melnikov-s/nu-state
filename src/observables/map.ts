@@ -1,10 +1,6 @@
 import Atom from "../core//nodes/atom";
 import Graph from "../core/graph";
-import {
-	getObservable,
-	getObservableSource,
-	getAdministration,
-} from "./utils/lookup";
+import { getObservable, source, getAdministration } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
 import Administration, {
 	getAdministration as hasObservable,
@@ -97,7 +93,7 @@ export class MapAdministration<K, V>
 
 	private hasEntry(key: K): boolean {
 		return !!(
-			this.source.has(getObservableSource(key)) ||
+			this.source.has(source(key)) ||
 			(hasObservable(key) && this.source.has(getObservable(key, this.graph)))
 		);
 	}
@@ -111,7 +107,7 @@ export class MapAdministration<K, V>
 
 	has(key: K): boolean {
 		if (this.graph.isTracking()) {
-			this.hasMap.reportObserved(getObservableSource(key));
+			this.hasMap.reportObserved(source(key));
 			this.atom.reportObserved();
 		}
 
@@ -119,8 +115,8 @@ export class MapAdministration<K, V>
 	}
 
 	set(key: K, value: V): this {
-		const targetKey = getObservableSource(key);
-		const targetValue = getObservableSource(value);
+		const targetKey = source(key);
+		const targetValue = source(value);
 
 		const hasKey = this.hasEntry(key);
 		const oldValue: V | undefined =
@@ -152,7 +148,7 @@ export class MapAdministration<K, V>
 	}
 
 	delete(key: K): boolean {
-		const targetKey = getObservableSource(key);
+		const targetKey = source(key);
 
 		if (this.hasEntry(key)) {
 			const oldValue = this.data.peek(targetKey);
@@ -172,7 +168,7 @@ export class MapAdministration<K, V>
 	}
 
 	get(key: K): V | undefined {
-		const targetKey = getObservableSource(key);
+		const targetKey = source(key);
 		return this.has(key)
 			? getObservable(
 					this.data.get(targetKey) ?? this.data.get(key),

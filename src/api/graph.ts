@@ -99,7 +99,7 @@ export function untracked<T>(fn: () => T): T {
 	return getDefaultGraph().untracked(fn);
 }
 
-export function getObservableSource<T extends object>(obj: T): T {
+export function source<T extends object>(obj: T): T {
 	const adm = getAdministration(obj);
 	return adm?.source;
 }

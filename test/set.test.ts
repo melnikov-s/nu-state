@@ -4,7 +4,7 @@ import {
 	isObservable,
 	reaction,
 	observe,
-	getObservableSource,
+	source,
 } from "../src/main";
 
 const set = <T>(obj: Set<T> = new Set()): Set<T> => {
@@ -143,8 +143,8 @@ test("set can be initialized with observable values", () => {
 	const o3 = {};
 
 	const s = set(new Set([o1, o2, o3]));
-	expect(s.has(getObservableSource(o1))).toBe(true);
-	expect(s.has(getObservableSource(o2))).toBe(true);
+	expect(s.has(source(o1))).toBe(true);
+	expect(s.has(source(o2))).toBe(true);
 	s.add(o1);
 	expect(s.size).toBe(3);
 	s.add(o2);
@@ -157,7 +157,7 @@ test("set can be initialized with observable values", () => {
 	expect(s.size).toBe(3);
 	s.delete(observable(o3));
 	expect(s.size).toBe(2);
-	s.delete(getObservableSource(o1));
+	s.delete(source(o1));
 	expect(s.size).toBe(2);
 	s.delete(o1);
 	expect(s.size).toBe(1);
@@ -180,7 +180,7 @@ test("does not trigger a change when same observable is set on set initialized w
 	s.add(o1);
 	expect(s.size).toBe(2);
 	expect(count).toBe(1);
-	s.add(getObservableSource(o1));
+	s.add(source(o1));
 	expect(s.size).toBe(2);
 	expect(count).toBe(1);
 	s.delete(o2);

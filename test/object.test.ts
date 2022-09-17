@@ -8,7 +8,7 @@ import {
 	observe,
 	enforceActions,
 	isObservable,
-	getObservableSource,
+	source,
 	decorate,
 	isInAction,
 } from "../src/main";
@@ -413,7 +413,7 @@ test("observes decorated non plain objects", () => {
 
 test("frozen objects are not observed", () => {
 	const o = object({ toBeFrozen: {} });
-	Object.freeze(getObservableSource(o).toBeFrozen);
+	Object.freeze(source(o).toBeFrozen);
 	expect(isObservable(o.toBeFrozen)).toBe(false);
 });
 
