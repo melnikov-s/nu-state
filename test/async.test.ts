@@ -6,6 +6,9 @@ import {
 	runInAction,
 	getDefaultGraph,
 	enforceActions,
+	batch,
+	isInBatch,
+	isInAction,
 } from "../src/main";
 
 function delay<T>(time: number, value: T) {
@@ -101,6 +104,39 @@ test("[mobx-test] it should support async actions", async () => {
 	};
 
 	const v = await runInAction(() => f(2));
+	expect(v).toBe(5);
+	expect(values).toEqual([1, 2, 3, 4, 5]);
+	expectNoActionsRunning();
+});
+
+test("[mobx-test] it should support async transactions (batch)", async () => {
+	enforceActions(false);
+	const values = [1];
+	const x = observable({ a: 1 });
+	reaction(
+		() => x.a,
+		(v) => values.push(v)
+	);
+
+	const f = async function (initial) {
+		x.a = initial; // this runs in action
+		expect(isInAction()).toBe(false);
+		expect(isInBatch()).toBe(true);
+		x.a = await task(delay(100, 3));
+		await task(delay(100, 0));
+		expect(isInAction()).toBe(false);
+		expect(isInBatch()).toBe(true);
+
+		x.a = 4;
+		x.a = await task(5 as any);
+
+		expect(x.a).toBe(5);
+		expect(isInAction()).toBe(false);
+		expect(isInBatch()).toBe(true);
+		return x.a;
+	};
+
+	const v = await batch(() => f(2));
 	expect(v).toBe(5);
 	expect(values).toEqual([1, 2, 3, 4, 5]);
 	expectNoActionsRunning();

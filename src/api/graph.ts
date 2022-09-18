@@ -84,7 +84,7 @@ export function isTracking(): boolean {
 }
 
 export function batch<T>(fn: () => T): T {
-	return getDefaultGraph().runInAction(fn);
+	return getDefaultGraph().batch(fn);
 }
 
 export function runInAction<T>(fn: () => T): T {

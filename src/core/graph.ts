@@ -116,7 +116,7 @@ export default class Graph {
 	> = new Map();
 	private reactionsCompleteCallbacks: Set<() => void> = new Set();
 	private callDepth = 0;
-	private taskDepth = 0;
+	private actionCallDepth = 0;
 	private taskCalledStack: boolean[] = [];
 
 	// clean up any unobserved computed nodes that were cached for the
@@ -205,6 +205,35 @@ export default class Graph {
 
 	private get topOfRunStack(): ObserverNode | null {
 		return this.runStack[this.runStack.length - 1] || null;
+	}
+
+	private run<T>(fn: () => T, untracked = true, asAction = false): T {
+		let result: unknown;
+		this.taskCalledStack.push(false);
+
+		try {
+			asAction ? this.startAction() : this.startBatch();
+			result = untracked ? this.untracked(fn) : fn();
+		} finally {
+			if (this.taskCalledStack[this.taskCalledStack.length - 1]) {
+				if (typeof (result as Promise<unknown>)?.finally !== "function") {
+					this.taskCalledStack.pop();
+					throw new Error(
+						"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :" +
+							typeof result
+					);
+				}
+				result = (result as Promise<T>).finally(() => {
+					asAction ? this.endAction() : this.endBatch();
+				});
+			} else {
+				asAction ? this.endAction() : this.endBatch();
+			}
+
+			this.taskCalledStack.pop();
+		}
+
+		return result as T;
 	}
 
 	enforceActions(enforce: boolean): void {
@@ -422,68 +451,48 @@ export default class Graph {
 	}
 
 	runInAction<T>(fn: () => T, untracked = true): T {
-		let result: unknown;
-		if (this.taskDepth === 0) {
-			this.taskCalledStack.length = 0;
-		}
-
-		this.taskDepth++;
-
-		this.taskCalledStack.push(false);
-
-		try {
-			this.startAction();
-			result = untracked ? this.untracked(fn) : fn();
-		} finally {
-			if (this.taskCalledStack[this.taskDepth - 1]) {
-				if (typeof (result as Promise<unknown>)?.finally !== "function") {
-					this.taskDepth--;
-					throw new Error(
-						"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :" +
-							typeof result
-					);
-				}
-				result = (result as Promise<T>).finally(() => {
-					this.endAction();
-				});
-			} else {
-				this.endAction();
-			}
-
-			this.taskDepth--;
-		}
-
-		return result as T;
+		return this.run(fn, untracked, true);
 	}
 
 	task<T>(promise: Promise<T>): Promise<T> {
-		if (!this.inAction) {
+		if (!this.inBatch) {
 			throw new Error("lobx: can't call `task` outside of an action");
 		}
-		this.endAction();
-		this.taskCalledStack[this.taskDepth - 1] = true;
+		const inAction = this.inAction;
+		if (inAction) {
+			this.endAction();
+		} else {
+			this.endBatch();
+		}
+		this.taskCalledStack[this.taskCalledStack.length - 1] = true;
 		return Promise.resolve(promise).finally(() => {
-			this.startAction();
+			if (inAction) {
+				this.startAction();
+			} else {
+				this.startBatch();
+			}
 		});
 	}
 
 	batch<T>(fn: () => T): T {
-		let result: T;
-		try {
-			this.startBatch();
-			result = fn();
-		} finally {
-			this.endBatch();
-		}
-
-		return result;
+		return this.run(fn, false);
 	}
 
 	endAction(): void {
+		if (this.actionCallDepth === 0) {
+			throw new Error(
+				"lobx: attempted to end an action that has not been started"
+			);
+		}
+		this.actionCallDepth--;
+		if (this.actionCallDepth === 0) {
+			this.inAction = false;
+		}
 		this.endBatch();
 	}
 
 	startAction(): void {
+		this.actionCallDepth++;
 		this.inAction = true;
 		this.startBatch();
 	}
