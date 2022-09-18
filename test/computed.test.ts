@@ -8,6 +8,7 @@ import {
 	isObserved,
 	onObservedStateChange,
 	signal,
+	getInternalComputedNode,
 } from "../src/main";
 
 test("can return a computed value", () => {
@@ -532,16 +533,19 @@ test("non observed will become dirty after it's evaluated", () => {
 	});
 	const c2 = computed(() => c1() + c1());
 	const c3 = computed(() => c2() + c2());
+	const c1Internal = getInternalComputedNode(c1);
+	const c2Internal = getInternalComputedNode(c2);
+	const c3Internal = getInternalComputedNode(c3);
 
 	c3();
-	expect(c1.isDirty()).toBe(true);
-	expect(c2.isDirty()).toBe(true);
-	expect(c3.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(true);
+	expect(c2Internal.isDirty()).toBe(true);
+	expect(c3Internal.isDirty()).toBe(true);
 
 	effect(() => c2());
-	expect(c1.isDirty()).toBe(false);
-	expect(c2.isDirty()).toBe(false);
-	expect(c3.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(false);
+	expect(c2Internal.isDirty()).toBe(false);
+	expect(c3Internal.isDirty()).toBe(true);
 });
 
 test("computed is keptAlive even if not observed", () => {
@@ -593,18 +597,20 @@ test("keep alive does not become unobserved", () => {
 		{ keepAlive: true }
 	);
 	const c2 = computed(() => get() === 1 && c1());
+	const c1Internal = getInternalComputedNode(c1);
+	const c2Internal = getInternalComputedNode(c2);
 
-	expect(c1.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(true);
 	c2();
 	expect(count).toBe(1);
-	expect(c2.isDirty()).toBe(true);
-	expect(c1.isDirty()).toBe(false);
+	expect(c2Internal.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(false);
 
 	set(2);
-	expect(c1.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(true);
 	expect(c2()).toBe(false);
 	expect(count).toBe(1);
-	expect(c1.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(true);
 	set(1);
 	expect(count).toBe(1);
 	effect(() => c2());
@@ -612,11 +618,11 @@ test("keep alive does not become unobserved", () => {
 	set(2);
 	expect(count).toBe(2);
 	expect(c2()).toBe(false);
-	expect(c1.isDirty()).toBe(true);
+	expect(c1Internal.isDirty()).toBe(true);
 	expect(count).toBe(2);
 	set(1);
 	expect(count).toBe(3);
-	expect(c1.isDirty()).toBe(false);
+	expect(c1Internal.isDirty()).toBe(false);
 });
 
 test("can unobserve a keepAlive computed manually", () => {
@@ -630,15 +636,17 @@ test("can unobserve a keepAlive computed manually", () => {
 		{ keepAlive: true }
 	);
 
+	const c1Internal = getInternalComputedNode(c1);
+
 	c1();
-	expect(c1.isDirty()).toBe(false);
+	expect(c1Internal.isDirty()).toBe(false);
 	c1();
 	expect(count).toBe(1);
-	c1.setKeepAlive(false);
-	expect(c1.isDirty()).toBe(true);
-	c1.setKeepAlive(true);
+	c1Internal.setKeepAlive(false);
+	expect(c1Internal.isDirty()).toBe(true);
+	c1Internal.setKeepAlive(true);
 	expect(c1()).toBe(2);
-	expect(c1.isDirty()).toBe(false);
+	expect(c1Internal.isDirty()).toBe(false);
 });
 
 test("can provide a custom equals function", () => {
@@ -734,20 +742,45 @@ test("can change keepAlive once computed has been created", () => {
 	expect(onBecomeObservedCount).toBe(1);
 	expect(onBecomeUnobservedCount).toBe(0);
 
-	expect(c.isDirty()).toBe(false);
+	const cInternal = getInternalComputedNode(c);
+
+	expect(cInternal.isDirty()).toBe(false);
 	expect(isObserved(o)).toBe(true);
-	c.setKeepAlive(false);
+	cInternal.setKeepAlive(false);
 	expect(onBecomeObservedCount).toBe(1);
 	expect(onBecomeUnobservedCount).toBe(1);
-	expect(c.isDirty()).toBe(true);
+	expect(cInternal.isDirty()).toBe(true);
 	expect(isObserved(o)).toBe(false);
 	c();
-	expect(c.isDirty()).toBe(true);
-	c.setKeepAlive(true);
-	expect(c.isDirty()).toBe(true);
+	expect(cInternal.isDirty()).toBe(true);
+	cInternal.setKeepAlive(true);
+	expect(cInternal.isDirty()).toBe(true);
 	c();
-	expect(c.isDirty()).toBe(false);
+	expect(cInternal.isDirty()).toBe(false);
 	expect(isObserved(o)).toBe(true);
+});
+
+test("can manually clear computed cached value", () => {
+	let count = 0;
+	const o = observable({ value: 1 });
+	const c = computed(() => {
+		count++;
+		return o.value * 2;
+	});
+
+	effect(() => {
+		c();
+	});
+
+	expect(count).toBe(1);
+	o.value++;
+	expect(count).toBe(2);
+	c();
+	c();
+	expect(count).toBe(2);
+	getInternalComputedNode(c).clear();
+	c();
+	expect(count).toBe(3);
 });
 
 test("[mobx-test] computed values believe NaN === NaN", () => {

@@ -1,5 +1,9 @@
 import effect from "./api/effect";
-import computed, { Computed, ComputedOptions } from "./api/computed";
+import computed, {
+	Computed,
+	ComputedOptions,
+	getInternalComputedNode,
+} from "./api/computed";
 import listener, { Listener } from "./api/listener";
 import atom, { Atom } from "./api/atom";
 import observable, { ObservableOptions } from "./api/observable";
@@ -52,6 +56,7 @@ export {
 	reportObserved,
 	getAdministration as unstable_getAdministration,
 	getDefaultGraph,
+	getInternalComputedNode,
 	source,
 	graph,
 	isInAction,
