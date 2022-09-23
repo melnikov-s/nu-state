@@ -2,12 +2,19 @@ import Graph from "../core/graph";
 import { getAdministration, getObservable, source } from "./utils/lookup";
 import { notifyArrayUpdate, notifySpliceArray } from "./utils/observe";
 import Administration from "./utils/Administration";
+import AtomMap from "./utils/AtomMap";
+import Atom from "../core/nodes/atom";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
+	valuesMap: AtomMap<number>;
+	keysAtom: Atom;
+
 	constructor(source: T[] = [], graph: Graph) {
 		super(source, graph);
 		this.proxyTraps.get = (_, name) => this.proxyGet(name);
 		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
+		this.valuesMap = new AtomMap(graph);
+		this.keysAtom = new Atom(graph);
 	}
 
 	private proxyGet(name: PropertyKey): unknown {
@@ -54,6 +61,8 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 	get(index: number): T | undefined {
 		this.atom.reportObserved();
+		this.valuesMap.reportObserved(index);
+
 		return getObservable(this.source[index], this.graph);
 	}
 
@@ -69,7 +78,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 			if (changed) {
 				values[index] = targetValue;
 				notifyArrayUpdate(this.proxy, index, oldValue, targetValue);
-				this.onArrayChanged();
+				this.onArrayChanged(false, index, 1);
 			}
 		} else if (index === values.length) {
 			// add a new item
@@ -84,6 +93,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 	getArrayLength(): number {
 		this.atom.reportObserved();
+		this.keysAtom.reportObserved();
 		return this.source.length;
 	}
 
@@ -122,7 +132,11 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 		if (deleteCount !== 0 || newTargetItems.length !== 0) {
 			notifySpliceArray(this.proxy, index, newTargetItems, res);
-			this.onArrayChanged();
+			this.onArrayChanged(
+				length !== this.source.length,
+				index,
+				Math.max(deleteCount ?? 0, newItems?.length ?? 0)
+			);
 		}
 
 		return res;
@@ -139,9 +153,18 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		);
 	}
 
-	onArrayChanged(): void {
+	onArrayChanged(lengthChanged = false, index?: number, count?: number): void {
 		this.graph.batch(() => {
-			this.atom.reportChanged();
+			if (lengthChanged) {
+				this.keysAtom.reportChanged();
+			}
+			if (index == null) {
+				this.atom.reportChanged();
+			} else {
+				for (let i = index; i < index + count!; i++) {
+					this.valuesMap.reportChanged(i);
+				}
+			}
 			this.flushChange();
 		});
 	}
@@ -155,8 +178,9 @@ const arrayMethods: any = {
 		end?: number | undefined
 	): T[] {
 		const adm = getAdministration(this);
+		const oldLength = adm.source.length;
 		adm.source.fill(value, start, end);
-		adm.onArrayChanged();
+		adm.onArrayChanged(oldLength !== adm.source.length, start, end);
 
 		return this;
 	},
@@ -207,7 +231,7 @@ const arrayMethods: any = {
 
 		adm.source.reverse();
 
-		adm.onArrayChanged();
+		adm.onArrayChanged(false, 0, adm.source.length);
 
 		return this;
 	},
