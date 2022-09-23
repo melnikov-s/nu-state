@@ -52,7 +52,9 @@ export default class AtomMap<K> {
 	}
 
 	reportObserved(key: K): void {
-		this.getOrCreate(key).reportObserved();
+		if (this.graph.isTracking()) {
+			this.getOrCreate(key).reportObserved();
+		}
 	}
 
 	reportChanged(key: K): void {

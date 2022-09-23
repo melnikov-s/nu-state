@@ -253,6 +253,103 @@ test("observe can change the value before reaction occurs", () => {
 	expect(buf).toEqual([5]);
 });
 
+test("can observe a single index", () => {
+	const ar = array([0, 1]);
+	let count = 0;
+
+	effect(() => {
+		count++;
+		ar[0];
+	});
+
+	expect(count).toBe(1);
+	ar[1]++;
+	expect(count).toBe(1);
+	ar.push(2);
+	expect(count).toBe(1);
+	ar.pop();
+	expect(count).toBe(1);
+	ar[0]++;
+	expect(count).toBe(2);
+	ar[0] = ar[0];
+	expect(count).toBe(2);
+	ar.unshift(42);
+	expect(count).toBe(3);
+	ar[0]++;
+	expect(count).toBe(4);
+	ar.shift();
+	expect(count).toBe(5);
+});
+
+test("can observe multiple indices", () => {
+	const ar = array([0, 1, 2, 3, 4, 5]);
+	const maxIndex = 5;
+	let count = 0;
+
+	effect(() => {
+		count++;
+		for (let i = 0; i <= maxIndex; i++) {
+			ar[i];
+		}
+	});
+
+	expect(count).toBe(1);
+
+	for (let i = 0; i < maxIndex; i++) {
+		ar[i]++;
+	}
+	const newCount = maxIndex + 1;
+	expect(count).toBe(newCount);
+	ar.push(6);
+	expect(count).toBe(newCount);
+	ar.pop();
+	expect(count).toBe(newCount);
+	ar.pop();
+	expect(count).toBe(newCount + 1);
+	ar.reverse();
+	expect(count).toBe(newCount + 2);
+});
+
+test("Array.prototype.reverse", () => {
+	const ar = array([0, 0, 0, 0, 0, 0]);
+	const maxIndex = 5;
+	let count = 0;
+
+	effect(() => {
+		count++;
+		for (let i = 0; i <= maxIndex; i++) {
+			ar[i];
+		}
+	});
+
+	expect(count).toBe(1);
+	ar.reverse();
+	//TODO: should be 1
+	expect(count).toBe(2);
+	ar[0]++;
+	expect(count).toBe(3);
+	ar.reverse();
+	expect(count).toBe(4);
+});
+
+test("Array.length", () => {
+	const ar = array([0, 0, 0, 0, 0, 0]);
+	let count = 0;
+
+	effect(() => {
+		count++;
+		ar.length;
+	});
+
+	expect(count).toBe(1);
+	ar[0]++;
+	expect(count).toBe(1);
+	ar.pop();
+	expect(count).toBe(2);
+	ar.push(0);
+	expect(count).toBe(3);
+});
+
 test("[mobx-test] array crud", function () {
 	const ar = array([1, 4]);
 	const buf = [];
