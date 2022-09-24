@@ -2,15 +2,10 @@ import Graph from "../../core/graph";
 import { MapAdministration } from "../map";
 import { SetAdministration } from "../set";
 import { ObjectAdministration } from "../object";
-import {
-	ActionOptions,
-	Configuration,
-	ConfigurationGetter,
-} from "./configuration";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import Administration, { getAdministration as getAdm } from "./Administration";
-import { getParentConstructor, isPlainObject } from "../../utils";
+import { isPlainObject } from "../../utils";
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -27,54 +22,6 @@ export function getAdministration<T extends object>(
 }
 
 const actionsMap: WeakMap<Function, Function> = new WeakMap();
-const constructorConfigMap: WeakMap<Function, Configuration<unknown> | null> =
-	new WeakMap();
-
-export function getCtorConfiguration(Ctor: Function): Configuration<unknown> {
-	let config = constructorConfigMap.get(Ctor);
-	if (!config) {
-		config = setCtorConfiguration(Ctor, {});
-	}
-
-	return config;
-}
-
-export function hasCtorConfiguration(Ctor: Function): boolean {
-	return constructorConfigMap.has(Ctor);
-}
-
-export function setCtorAutoConfigure(Ctor: Function): void {
-	constructorConfigMap.set(Ctor, null);
-}
-
-export function setCtorConfiguration<T>(
-	Ctor: Function,
-	config: Configuration<T> | ConfigurationGetter<T>
-): Configuration<T> {
-	if (constructorConfigMap.has(Ctor)) {
-		throw new Error(
-			`lobx: Constructor '${Ctor.name}' has already been decorated`
-		);
-	}
-
-	if (typeof config === "function") {
-		throw new Error(
-			"function configuration not supported on constructors/classes"
-		);
-	}
-	let finalConfig = config!;
-	let constructor = Ctor as Function | undefined;
-	while ((constructor = getParentConstructor(constructor))) {
-		const config = constructorConfigMap.get(constructor);
-		if (config) {
-			finalConfig = { ...config, ...finalConfig };
-		}
-	}
-
-	constructorConfigMap.set(Ctor, finalConfig);
-
-	return finalConfig;
-}
 
 export function source<T>(obj: T): T {
 	const adm = getAdm(obj);
@@ -82,14 +29,8 @@ export function source<T>(obj: T): T {
 	return adm ? (adm.source as unknown as T) : obj;
 }
 
-export function getAction<T extends Function>(
-	fn: T,
-	graph: Graph,
-	options: ActionOptions,
-	context: unknown
-): T {
+export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	let action = actionsMap.get(fn);
-	const bound = options.bound;
 
 	if (!action) {
 		action = function (this: unknown, ...args: unknown[]): unknown {
@@ -97,10 +38,7 @@ export function getAction<T extends Function>(
 				return new (fn as any)(...args);
 			}
 
-			return graph.runInAction(
-				() => fn.apply(bound ? context : this, args),
-				options.untracked
-			);
+			return graph.runInAction(() => fn.apply(this, args), false);
 		};
 
 		actionsMap.set(fn, action);
@@ -109,25 +47,10 @@ export function getAction<T extends Function>(
 	return action as T;
 }
 
-export function getObservableWithConfig<T extends object>(
-	target: T,
-	graph: Graph,
-	config: Configuration<T> | ConfigurationGetter<T>
-): T {
-	if (getAdm(target)) {
-		throw new Error(
-			"can't re-configure an observable that's already been observed"
-		);
-	}
-
-	const adm = new ObjectAdministration(target, graph, config);
-	return adm.proxy;
-}
-
 export function getObservable<T>(
 	value: T,
 	graph: Graph,
-	config?: Configuration<T>
+	observeClass: boolean = false
 ): T {
 	const adm = getAdm(value);
 
@@ -149,10 +72,6 @@ export function getObservable<T>(
 	) {
 		const obj = value as unknown as object;
 
-		if (config) {
-			return getObservableWithConfig(obj, graph, config) as unknown as T;
-		}
-
 		let Adm: new (obj: any, graph: Graph) => Administration =
 			ObjectAdministration;
 
@@ -164,22 +83,8 @@ export function getObservable<T>(
 			Adm = SetAdministration;
 		} else if (obj instanceof Date) {
 			Adm = DateAdministration;
-		} else if (typeof obj === "object") {
-			const proto = Object.getPrototypeOf(obj);
-
-			if (constructorConfigMap.has(proto?.constructor)) {
-				const config = constructorConfigMap.get(proto?.constructor);
-
-				if (config) {
-					return getObservableWithConfig(
-						obj,
-						graph,
-						constructorConfigMap.get(proto?.constructor)!
-					) as unknown as T;
-				}
-			} else if (!isPlainObject(value)) {
-				return value;
-			}
+		} else if (!observeClass && !isPlainObject(value)) {
+			return value;
 		}
 
 		const adm = new Adm(obj, graph);

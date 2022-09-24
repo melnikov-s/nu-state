@@ -9,7 +9,6 @@ import atom, { Atom } from "./api/atom";
 import observable, { ObservableOptions } from "./api/observable";
 import reaction from "./api/reaction";
 import action from "./api/action";
-import decorate from "./api/decorate";
 import signal, { Signal, SignalOptions } from "./api/signal";
 import graph, {
 	Graph,
@@ -30,7 +29,6 @@ import graph, {
 } from "./api/graph";
 import { source, isObservable } from "./observables/utils/lookup";
 import { observe } from "./observables/utils/observe";
-import { Configuration } from "./observables/utils/configuration";
 import { getAdministration } from "./observables/utils/lookup";
 import {
 	Scheduler,
@@ -50,7 +48,6 @@ export {
 	createAnimationScheduler,
 	createMicroTaskScheduler,
 	signal,
-	decorate,
 	enforceActions,
 	reportChanged,
 	reportObserved,
@@ -80,7 +77,6 @@ export type {
 	Atom,
 	Computed,
 	ComputedOptions,
-	Configuration,
 	Graph,
 	Listener,
 	Signal,
