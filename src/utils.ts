@@ -14,6 +14,24 @@ export function isPropertyKey(val: unknown): val is string | number | symbol {
 	);
 }
 
+export type PropertyType = "action" | "computed" | "observable";
+
+export function getPropertyType(key: PropertyKey, obj: object): PropertyType {
+	const descriptor = getPropertyDescriptor(obj, key);
+	if (descriptor) {
+		if (
+			typeof descriptor.get === "function" ||
+			typeof descriptor.set === "function"
+		) {
+			return "computed";
+		} else if (typeof descriptor.value === "function") {
+			return "action";
+		}
+	}
+
+	return "observable";
+}
+
 export function getPropertyDescriptor(
 	obj: object,
 	key: PropertyKey

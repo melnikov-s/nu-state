@@ -2,44 +2,30 @@ import Atom from "../core/nodes/atom";
 import Graph from "../core/graph";
 import { getObservable, source, getAction } from "./utils/lookup";
 import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
-import { isPropertyKey, getPropertyDescriptor } from "../utils";
+import {
+	isPropertyKey,
+	getPropertyDescriptor,
+	PropertyType,
+	getPropertyType,
+} from "../utils";
 import Administration, { getAdministration } from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import ComputedNode from "../core/nodes/computed";
-import {
-	ComputedOptions,
-	Configuration,
-	ConfigurationGetter,
-	ConfigurationTypes,
-	defaultConfigGetter,
-	ObservableOptions,
-	ObservableOptionsConfig,
-	propertyType,
-} from "./utils/configuration";
 
 export class ObjectAdministration<T extends object> extends Administration<T> {
 	keysAtom: Atom;
 	hasMap: AtomMap<PropertyKey>;
 	valuesMap: AtomMap<PropertyKey>;
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
-	config: Configuration<T>;
-	configGetter: ConfigurationGetter<T> | undefined;
+	types: Map<PropertyKey, PropertyType>;
 
-	constructor(
-		source: T = {} as T,
-		graph: Graph,
-		config: Configuration<T> | ConfigurationGetter<T> = defaultConfigGetter
-	) {
+	constructor(source: T = {} as T, graph: Graph) {
 		super(source, graph);
 		this.keysAtom = new Atom(graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
-		if (typeof config === "function") {
-			this.config = {};
-			this.configGetter = config;
-		} else {
-			this.config = config;
-		}
+		this.types = new Map();
+
 		if (typeof source === "function") {
 			this.proxyTraps.construct = (_, args) =>
 				this.proxyConstruct(args) as object;
@@ -120,31 +106,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		});
 	}
 
-	private loadConfig(key: keyof T): void {
-		if (
-			this.configGetter &&
-			!Object.prototype.hasOwnProperty.call(this.config, key)
-		) {
-			this.config[key] = this.configGetter(key as keyof T, this.proxy);
-		}
-	}
-
-	private isUnconfigured(key: keyof T): boolean {
-		this.loadConfig(key);
-		return (
-			!Object.prototype.hasOwnProperty.call(this.config, key) ||
-			this.config[key] === undefined
-		);
-	}
-
-	private getConfig(key: keyof T): ConfigurationTypes {
-		this.loadConfig(key);
-		return (this.config?.[key] ?? propertyType.observable)!;
-	}
-
 	private getComputed(key: keyof T): ComputedNode<T[keyof T]> {
-		const computedConfig: ConfigurationTypes = (this.config?.[key] ??
-			propertyType.observable) as ComputedOptions;
 		if (!this.computedMap) this.computedMap = new Map();
 		let computedNode = this.computedMap.get(key);
 		if (!computedNode) {
@@ -155,8 +117,8 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			computedNode = new ComputedNode(
 				this.graph,
 				descriptor.get,
-				computedConfig.equals,
-				computedConfig.keepAlive,
+				undefined,
+				false,
 				this.proxy
 			);
 
@@ -164,6 +126,17 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		}
 
 		return computedNode;
+	}
+
+	private getType(key: keyof T): PropertyType {
+		let type = this.types.get(key);
+
+		if (!type) {
+			type = getPropertyType(key, this.source);
+			this.types.set(key, type);
+		}
+
+		return type;
 	}
 
 	protected reportObserveDeep(): void {
@@ -181,26 +154,17 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			return this.graph.onObservedStateChange(this.atom, callback);
 		}
 
-		if (this.isUnconfigured(key)) {
-			throw new Error(
-				`onObservedStatChange not supported on this object with key: ${String(
-					key
-				)}`
-			);
-		}
+		const type = this.getType(key);
 
-		const config: ConfigurationTypes = (this.config?.[key] ??
-			propertyType.observable)!;
-
-		switch (config.type) {
-			case propertyType.action.type: {
+		switch (type) {
+			case "action": {
 				throw new Error(`onObservedStatChange not supported on actions`);
 			}
-			case propertyType.observable.type: {
+			case "observable": {
 				const atom = this.valuesMap.getOrCreate(key);
 				return this.graph.onObservedStateChange(atom, callback);
 			}
-			case propertyType.computed.type: {
+			case "computed": {
 				const computed = this.getComputed(key);
 				return this.graph.onObservedStateChange(computed, callback);
 			}
@@ -208,15 +172,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	read(key: keyof T): unknown {
-		if (this.isUnconfigured(key)) {
-			return this.get(key);
-		}
+		const type = this.getType(key);
 
-		const config: ConfigurationTypes = this.getConfig(key);
-
-		switch (config.type) {
-			case propertyType.observable.type:
-			case propertyType.action.type: {
+		switch (type) {
+			case "observable":
+			case "action": {
 				if (key in this.source) {
 					this.valuesMap.reportObserved(key);
 				} else if (this.graph.isTracking()) {
@@ -225,26 +185,13 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 				this.atom.reportObserved();
 
-				if (config.type === propertyType.observable.type) {
-					if ((config as ObservableOptions).ref) {
-						return this.get(key);
-					}
-
-					return getObservable(
-						this.get(key),
-						this.graph,
-						(config as unknown as ObservableOptionsConfig).configuration
-					);
+				if (type === "observable") {
+					return getObservable(this.get(key), this.graph);
 				}
 
-				return getAction(
-					this.get(key) as unknown as Function,
-					this.graph,
-					config,
-					this.proxy
-				);
+				return getAction(this.get(key) as unknown as Function, this.graph);
 			}
-			case propertyType.computed.type: {
+			case "computed": {
 				const computedNode = this.getComputed(key);
 
 				return computedNode.get();
@@ -255,14 +202,10 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	write(key: keyof T, newValue: T[keyof T]): void {
-		if (this.isUnconfigured(key)) {
-			this.set(key, newValue);
-			return;
-		}
-		const config = this.getConfig(key);
+		const type = this.getType(key);
 
 		// if this property is a setter
-		if (config.type === propertyType.computed.type) {
+		if (type === "computed") {
 			this.graph.runInAction(() => this.set(key, newValue));
 			return;
 		}
@@ -290,7 +233,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	has(key: keyof T): boolean {
-		if (this.graph.isTracking() && !this.isUnconfigured(key)) {
+		if (this.graph.isTracking()) {
 			this.hasMap.reportObserved(key);
 			this.atom.reportObserved();
 		}
@@ -299,7 +242,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	remove(key: keyof T): void {
-		if (!(key in this.source) || this.isUnconfigured(key)) return;
+		if (!(key in this.source)) return;
 
 		const oldValue = this.get(key);
 		delete this.source[key];

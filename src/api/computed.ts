@@ -1,7 +1,4 @@
 import ComputedNode from "../core/nodes/computed";
-import { getOpts, propertyType } from "../observables/utils/configuration";
-import { getCtorConfiguration } from "../observables/utils/lookup";
-import { isPropertyKey } from "../utils";
 import { resolveGraph, Graph, setNode, getNode } from "./graph";
 
 export type Computed<T> = () => T;
@@ -27,41 +24,23 @@ const internalComputedNodes = new WeakMap<
 	InternalComputedNode<unknown>
 >();
 
-function computed<T>(fn: () => T, opts?: ComputedOptions<T>): Computed<T>;
+export default function computed<T>(
+	fn: () => T,
+	opts?: ComputedOptions<T>
+): Computed<T> {
+	const computedNode = new ComputedNode(
+		resolveGraph(opts?.graph),
+		fn,
+		opts?.equals,
+		opts?.keepAlive,
+		opts?.context
+	);
 
-function computed(
-	target: unknown,
-	propertyKey: string,
-	descriptor: PropertyDescriptor
-): any;
+	const computed = computedNode.get.bind(computedNode);
 
-function computed<T>(...args: unknown[]): unknown {
-	if (isPropertyKey(args[1])) {
-		const [target, propertyKey, descriptor] = args as [
-			any,
-			PropertyKey,
-			unknown
-		];
+	setNode(computed, computedNode);
 
-		const config = getCtorConfiguration(target.constructor);
-		config[propertyKey] = propertyType.computed;
-		return descriptor;
-	} else {
-		const [fn, opts] = args as [() => T, ComputedOptions<T>];
-		const computedNode = new ComputedNode(
-			resolveGraph(opts?.graph),
-			fn,
-			opts?.equals,
-			opts?.keepAlive,
-			opts?.context
-		);
-
-		const computed = computedNode.get.bind(computedNode);
-
-		setNode(computed, computedNode);
-
-		return computed;
-	}
+	return computed;
 }
 
 export function getInternalComputedNode<T>(
@@ -90,11 +69,3 @@ export function getInternalComputedNode<T>(
 
 	return internalNode as InternalComputedNode<T>;
 }
-
-Object.assign(computed, propertyType.computed);
-
-computed.opts = getOpts(propertyType.computed);
-
-export default computed as typeof computed & {
-	opts: typeof computed.opts;
-} & typeof propertyType.computed;
