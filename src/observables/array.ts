@@ -250,33 +250,115 @@ const arrayMethods: any = {
 	},
 };
 
-[
-	"concat",
-	"every",
-	"filter",
-	"forEach",
-	"map",
-	"flatMap",
-	"find",
-	"findIndex",
-	"some",
-	"join",
-	"toString",
-	"toLocaleString",
-	"slice",
-	"copyWithin",
-	"flat",
-	"indexOf",
-	"includes",
-	"lastIndexOf",
-	"reduce",
-	"reduceRight",
-].forEach((method) => {
+["join", "toString", "toLocaleString"].forEach((method) => {
+	if (Array.prototype.hasOwnProperty(method)) {
+		arrayMethods[method] = function (this: unknown[]): unknown {
+			const adm = getAdministration(this);
+			adm.reportObserved(false);
+			const sourceArr = source(this);
+
+			return sourceArr[method].apply(sourceArr, arguments);
+		};
+	}
+});
+
+["indexOf", "includes", "lastIndexOf"].forEach((method) => {
 	if (Array.prototype.hasOwnProperty(method)) {
 		arrayMethods[method] = function (this: unknown[]): unknown {
 			const adm = getAdministration(this);
 
 			return adm.source[method].apply(adm.proxy, arguments);
+		};
+	}
+});
+
+["slice", "concat", "flat", "copyWithin"].forEach((method) => {
+	if (Array.prototype.hasOwnProperty(method)) {
+		arrayMethods[method] = function (this: unknown[]): unknown {
+			const adm = getAdministration(this);
+			adm.reportObserved(false);
+
+			return getObservable(
+				adm.source[method].apply(adm.source, arguments),
+				adm.graph
+			);
+		};
+	}
+});
+
+["every", "forEach", "map", "flatMap", "findIndex", "some"].forEach(
+	(method) => {
+		if (Array.prototype.hasOwnProperty(method)) {
+			arrayMethods[method] = function (
+				this: unknown[],
+				callback: Function,
+				thisArg: unknown
+			): unknown {
+				const adm = getAdministration(this);
+				adm.reportObserved(false);
+
+				return adm.source[method]((element: unknown, index: number) => {
+					return callback.call(
+						thisArg,
+						element && typeof element === "object"
+							? getObservable(element, adm.graph)
+							: element,
+						index,
+						this
+					);
+				});
+			};
+		}
+	}
+);
+
+["filter", "find"].forEach((method) => {
+	if (Array.prototype.hasOwnProperty(method)) {
+		arrayMethods[method] = function (
+			this: unknown[],
+			callback: Function,
+			thisArg: unknown
+		): unknown {
+			const adm = getAdministration(this);
+			adm.reportObserved(false);
+
+			return getObservable(
+				adm.source[method]((element: unknown, index: number) => {
+					return callback.call(
+						thisArg,
+						element && typeof element === "object"
+							? getObservable(element, adm.graph)
+							: element,
+						index,
+						this
+					);
+				}),
+				adm.graph
+			);
+		};
+	}
+});
+
+["reduce", "reduceRight"].forEach((method) => {
+	if (Array.prototype.hasOwnProperty(method)) {
+		arrayMethods[method] = function (this: unknown[]): unknown {
+			const adm = getAdministration(this);
+			adm.reportObserved(false);
+
+			const callback = arguments[0];
+			arguments[0] = (
+				accumulator: unknown,
+				currentValue: unknown,
+				index: number
+			) => {
+				return callback(
+					accumulator,
+					getObservable(currentValue, adm.graph),
+					index,
+					this
+				);
+			};
+			return adm.source[method].apply(adm.source, arguments);
 		};
 	}
 });
