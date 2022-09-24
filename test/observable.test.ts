@@ -19,12 +19,14 @@ test("reportObserved returns observable", () => {
 });
 
 test("reportObserved on object", () => {
-	const o = observable({ value: 1 });
+	const o = observable({ value: 1, newV: { value: 1 } });
 	let count = 0;
 	effect(() => {
 		reportObserved(o);
 		count++;
 	});
+
+	o.newV;
 
 	o.value = o.value;
 	expect(count).toBe(1);

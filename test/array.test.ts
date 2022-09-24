@@ -5,6 +5,7 @@ import {
 	observable,
 	observe,
 	isObservable,
+	source,
 } from "../src/main";
 
 const array = (obj: any[] = []): any[] => {
@@ -96,8 +97,9 @@ test("sort parameters are observable", () => {
 			const result = arr[method]();
 
 			expect(result).toEqual(realArr[method]());
-			expect(isObservable(result)).toBe(false);
+			expect(isObservable(result)).toBe(true);
 			expect(isObservable(result[0])).toBe(true);
+			expect(isObservable(source(result)[0])).toBe(false);
 		});
 
 		realArr.push(5);
@@ -135,7 +137,9 @@ test("sort parameters are observable", () => {
 			}, context);
 
 			if (result && typeof result === "object") {
-				expect(isObservable(result)).toBe(method === "find" ? true : false);
+				expect(isObservable(result)).toBe(
+					method === "find" || method === "filter" ? true : false
+				);
 			}
 
 			if (method === "filter") {
