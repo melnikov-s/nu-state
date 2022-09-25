@@ -3,7 +3,6 @@ import {
 	observable,
 	isObservable,
 	reaction,
-	observe,
 	source,
 	unstable_getAdministration,
 } from "../src/main";
@@ -204,104 +203,6 @@ test("does not trigger a change when same observable is set on map initialized w
 	expect(count).toBe(1);
 	m.set(o1, o2);
 	expect(count).toBe(2);
-});
-
-test("observe occurs before reaction", () => {
-	const m = map(new Map([["a", 1]]));
-	const buf = [];
-
-	observe(m, function () {
-		buf.push("trace1");
-	});
-
-	reaction(
-		() => m.get("a"),
-		() => buf.push("reaction")
-	);
-
-	observe(m, function () {
-		buf.push("trace2");
-	});
-
-	m.set("a", 2); // update
-	m.delete("a"); // delete
-	m.set("a", 3); // add
-
-	expect(buf).toEqual([
-		"trace1",
-		"trace2",
-		"reaction",
-		"trace1",
-		"trace2",
-		"reaction",
-		"trace1",
-		"trace2",
-		"reaction",
-	]);
-});
-
-test("[mobx-test] map crud", function () {
-	const events = [];
-	const m = map(new Map(Object.entries({ "1": "a" }))) as Map<any, any>;
-	observe(m, function (changes) {
-		events.push(changes);
-	});
-
-	expect(m.has("1")).toBe(true);
-	expect(m.has(1)).toBe(false);
-	expect(m.get("1")).toBe("a");
-	expect(m.get("b")).toBe(undefined);
-	expect(m.size).toBe(1);
-
-	m.set("1", "aa");
-	m.set(1, "b");
-	expect(m.has("1")).toBe(true);
-	expect(m.get("1")).toBe("aa");
-	expect(m.get(1)).toBe("b");
-
-	const k = ["arr"];
-	m.set(k, "arrVal");
-	expect(m.has(k)).toBe(true);
-	expect(m.get(k)).toBe("arrVal");
-
-	const s = Symbol("test");
-	expect(m.has(s)).toBe(false);
-	expect(m.get(s)).toBe(undefined);
-	m.set(s, "symbol-value");
-	expect(m.get(s)).toBe("symbol-value");
-	expect(m.get(s.toString())).toBe(undefined);
-
-	expect(keys(m)).toEqual(["1", 1, k, s]);
-	expect(values(m)).toEqual(["aa", "b", "arrVal", "symbol-value"]);
-	expect(Array.from(m)).toEqual([
-		["1", "aa"],
-		[1, "b"],
-		[k, "arrVal"],
-		[s, "symbol-value"],
-	]);
-
-	expect(m.size).toBe(4);
-
-	m.clear();
-	expect(keys(m)).toEqual([]);
-	expect(values(m)).toEqual([]);
-	expect(m.size).toBe(0);
-
-	expect(m.has("a")).toBe(false);
-	expect(m.has("b")).toBe(false);
-	expect(m.get("a")).toBe(undefined);
-	expect(m.get("b")).toBe(undefined);
-
-	expect(events).toEqual([
-		{ object: m, name: "1", newValue: "aa", oldValue: "a", type: "update" },
-		{ object: m, name: 1, newValue: "b", type: "add" },
-		{ object: m, name: ["arr"], newValue: "arrVal", type: "add" },
-		{ object: m, name: s, newValue: "symbol-value", type: "add" },
-		{ object: m, name: "1", oldValue: "aa", type: "delete" },
-		{ object: m, name: 1, oldValue: "b", type: "delete" },
-		{ object: m, name: ["arr"], oldValue: "arrVal", type: "delete" },
-		{ object: m, name: s, oldValue: "symbol-value", type: "delete" },
-	]);
 });
 
 test("[mobx-test] observe value", function () {

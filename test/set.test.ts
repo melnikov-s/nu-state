@@ -1,11 +1,4 @@
-import {
-	effect,
-	observable,
-	isObservable,
-	reaction,
-	observe,
-	source,
-} from "../src/main";
+import { effect, observable, isObservable, source } from "../src/main";
 
 const set = <T>(obj: Set<T> = new Set()): Set<T> => {
 	return observable(obj);
@@ -215,98 +208,6 @@ test("WeakSet does not report to have Set methods", () => {
 test("instanceof WeakSet", () => {
 	const s = weakSet();
 	expect(s instanceof WeakSet).toBe(true);
-});
-
-test("observe occurs before reaction", () => {
-	const o = set(new Set());
-	const buf = [];
-
-	observe(o, function () {
-		buf.push("trace1");
-	});
-
-	reaction(
-		() => o.has(1),
-		() => buf.push("reaction")
-	);
-
-	observe(o, function () {
-		buf.push("trace2");
-	});
-
-	o.add(1); // add
-	o.delete(1); // delete
-
-	expect(buf).toEqual([
-		"trace1",
-		"trace2",
-		"reaction",
-		"trace1",
-		"trace2",
-		"reaction",
-	]);
-});
-
-test("[mobx-test] set crud", function () {
-	const events = [];
-	const s = set(new Set([1])) as Set<any>;
-
-	const u = observe(s, (changes) => {
-		events.push(changes);
-	});
-
-	expect(s.has(1)).toBe(true);
-	expect(s.has("1")).toBe(false);
-	expect(s.size).toBe(1);
-
-	s.add("2");
-
-	expect(s.has("2")).toBe(true);
-	expect(s.size).toBe(2);
-	expect(keys(s)).toEqual([1, "2"]);
-	expect(Array.from(s)).toEqual([1, "2"]);
-	expect(Array.from(s)).toEqual([1, "2"]);
-
-	s.clear();
-	s.add(3);
-
-	expect(keys(s)).toEqual([3]);
-	expect(Array.from(s)).toEqual([3]);
-	expect(s.size).toBe(1);
-	expect(s.has(1)).toBe(false);
-	expect(s.has("2")).toBe(false);
-	expect(s.has(3)).toBe(true);
-
-	s.clear();
-	s.add(4);
-
-	expect(keys(s)).toEqual([4]);
-	expect(Array.from(s)).toEqual([4]);
-	expect(s.size).toBe(1);
-	expect(s.has(1)).toBe(false);
-	expect(s.has("2")).toBe(false);
-	expect(s.has(3)).toBe(false);
-	expect(s.has(4)).toBe(true);
-
-	s.clear();
-	expect(keys(s)).toEqual([]);
-	expect(Array.from(s)).toEqual([]);
-	expect(s.size).toBe(0);
-	expect(s.has(1)).toBe(false);
-	expect(s.has("2")).toBe(false);
-	expect(s.has(3)).toBe(false);
-	expect(s.has(4)).toBe(false);
-
-	u();
-	expect(events).toEqual([
-		{ object: s, newValue: "2", type: "add" },
-		{ object: s, oldValue: 1, type: "delete" },
-		{ object: s, oldValue: "2", type: "delete" },
-		{ object: s, newValue: 3, type: "add" },
-		{ object: s, oldValue: 3, type: "delete" },
-		{ object: s, newValue: 4, type: "add" },
-		{ object: s, oldValue: 4, type: "delete" },
-	]);
 });
 
 test("[mobx-test] observe value", function () {

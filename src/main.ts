@@ -28,7 +28,6 @@ import graph, {
 	reportChanged,
 } from "./api/graph";
 import { source, isObservable } from "./observables/utils/lookup";
-import { observe } from "./observables/utils/observe";
 import { getAdministration } from "./observables/utils/lookup";
 import {
 	Scheduler,
@@ -69,7 +68,6 @@ export {
 	reaction,
 	runInAction,
 	task,
-	observe,
 	untracked,
 };
 
@@ -84,13 +82,3 @@ export type {
 	ObservableOptions,
 	Scheduler,
 };
-
-export type {
-	MutationEvent,
-	AddEvent,
-	UpdateEvent,
-	DeleteEvent,
-	UpdateArrayEvent,
-	SpliceArrayEvent,
-	MutationListener,
-} from "./observables/utils/observe";

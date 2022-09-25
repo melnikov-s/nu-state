@@ -3,7 +3,6 @@ import {
 	reaction,
 	observable,
 	runInAction,
-	observe,
 	isObservable,
 	source,
 } from "../src/main";
@@ -133,85 +132,6 @@ test("frozen objects are not observed", () => {
 	const o = object({ toBeFrozen: {} });
 	Object.freeze(source(o).toBeFrozen);
 	expect(isObservable(o.toBeFrozen)).toBe(false);
-});
-
-test("observe occurs before reaction", () => {
-	const o = object({ a: 1 });
-	const buf = [];
-
-	observe(o, function () {
-		buf.push("trace1");
-	});
-
-	reaction(
-		() => o.a,
-		() => buf.push("reaction")
-	);
-
-	observe(o, function () {
-		buf.push("trace2");
-	});
-
-	o.a = 2; // update
-	delete o.a; // delete
-	o.a = 3; // add
-
-	expect(buf).toEqual([
-		"trace1",
-		"trace2",
-		"reaction",
-		"trace1",
-		"trace2",
-		"reaction",
-		"trace1",
-		"trace2",
-		"reaction",
-	]);
-});
-
-test("[mobx-test] object crud", function () {
-	const events = [];
-	const o = object({ "1": "a" });
-	observe(o, function (changes) {
-		events.push(changes);
-	});
-
-	expect("1" in o).toBe(true);
-	expect(1 in o).toBe(true);
-	expect(o["1"]).toBe("a");
-	expect(o["b"]).toBe(undefined);
-	expect(Object.keys(o).length).toBe(1);
-
-	o["1"] = "aa";
-	o[1] = "b";
-	expect("1" in o).toBe(true);
-	expect(o["1"]).toBe("b");
-	expect(o[1]).toBe("b");
-
-	expect(Object.keys(o)).toEqual(["1"]);
-	expect(Object.values(o)).toEqual(["b"]);
-	expect(Array.from(Object.entries(o))).toEqual([["1", "b"]]);
-
-	expect(Object.keys(o).length).toBe(1);
-
-	Object.keys(o).forEach((k) => delete o[k]);
-	expect(Object.keys(o)).toEqual([]);
-	expect(Object.values(o)).toEqual([]);
-	expect(Object.keys(o).length).toBe(0);
-
-	expect("a" in o).toBe(false);
-	expect("b" in o).toBe(false);
-	expect(o["a"]).toBe(undefined);
-	expect(o["b"]).toBe(undefined);
-
-	o["2"] = "a";
-
-	expect(events).toEqual([
-		{ object: o, name: "1", newValue: "aa", oldValue: "a", type: "update" },
-		{ object: o, name: "1", newValue: "b", oldValue: "aa", type: "update" },
-		{ object: o, name: "1", oldValue: "b", type: "delete" },
-		{ object: o, name: "2", newValue: "a", type: "add" },
-	]);
 });
 
 test("[mobx-test] keys should be observable when extending", () => {

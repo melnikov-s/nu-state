@@ -3,7 +3,6 @@ import {
 	effect,
 	reaction,
 	observable,
-	observe,
 	isObservable,
 	source,
 } from "../src/main";
@@ -210,53 +209,6 @@ test("observable values do not get stored on the original target (push)", () => 
 	expect(target[0]).toBe(oTarget);
 });
 
-test("observe occurs before reaction", () => {
-	const ar = array([1, 4]);
-	const buf = [];
-
-	observe(ar, function () {
-		buf.push("trace1");
-	});
-
-	reaction(
-		() => ar.join(),
-		() => buf.push("reaction")
-	);
-
-	observe(ar, function () {
-		buf.push("trace2");
-	});
-
-	ar[1] = 3;
-	ar[2] = 0;
-	expect(buf).toEqual([
-		"trace1",
-		"trace2",
-		"reaction",
-		"trace1",
-		"trace2",
-		"reaction",
-	]);
-});
-
-test("observe can change the value before reaction occurs", () => {
-	const ar = array([1, 4]);
-	const buf = [];
-	observe(ar, function () {
-		ar[1] = 5;
-	});
-
-	reaction(
-		() => ar[1],
-		(v) => {
-			buf.push(v);
-		}
-	);
-
-	ar[1] = 3;
-	expect(buf).toEqual([5]);
-});
-
 test("can observe a single index", () => {
 	const ar = array([0, 1]);
 	let count = 0;
@@ -352,78 +304,6 @@ test("Array.length", () => {
 	expect(count).toBe(2);
 	ar.push(0);
 	expect(count).toBe(3);
-});
-
-test("[mobx-test] array crud", function () {
-	const ar = array([1, 4]);
-	const buf = [];
-	const disposer = observe(ar, function (changes) {
-		buf.push(changes);
-	});
-
-	ar[1] = 3; // 1,3
-	ar[2] = 0; // 1, 3, 0
-	ar.shift(); // 3, 0
-	ar.push(1, 2); // 3, 0, 1, 2
-	ar.splice(1, 2, 3, 4); // 3, 3, 4, 2
-	expect(ar.slice()).toEqual([3, 3, 4, 2]);
-	ar.splice(6);
-	ar.splice(6, 2);
-	ar.splice(0, ar.length, "a");
-	ar.pop();
-	ar.pop(); // does not fire anything
-
-	// check the object param
-	buf.forEach(function (change) {
-		expect(change.object).toBe(ar);
-		delete change.object;
-	});
-
-	const result = [
-		{ type: "updateArray", index: 1, oldValue: 4, newValue: 3 },
-		{
-			type: "spliceArray",
-			index: 2,
-			removed: [],
-			added: [0],
-		},
-		{
-			type: "spliceArray",
-			index: 0,
-			removed: [1],
-			added: [],
-		},
-		{
-			type: "spliceArray",
-			index: 2,
-			removed: [],
-			added: [1, 2],
-		},
-		{
-			type: "spliceArray",
-			index: 1,
-			removed: [0, 1],
-			added: [3, 4],
-		},
-		{
-			type: "spliceArray",
-			index: 0,
-			removed: [3, 3, 4, 2],
-			added: ["a"],
-		},
-		{
-			type: "spliceArray",
-			index: 0,
-			removed: ["a"],
-			added: [],
-		},
-	];
-
-	expect(buf).toEqual(result);
-
-	disposer();
-	ar[0] = 5;
-	expect(buf).toEqual(result);
 });
 
 test("[mobx-test] basic functionality", function () {
