@@ -323,7 +323,7 @@ test("[mobx-test] cleanup", function () {
 
 	const adm = unstable_getAdministration(x);
 
-	let observable = adm.data.atomMap.get("a");
+	let observable = (adm as any).valuesMap.get("a");
 
 	expect(aValue).toBe(1);
 	expect(observable.observers.size).toBe(1);
@@ -337,7 +337,7 @@ test("[mobx-test] cleanup", function () {
 	expect(adm.hasMap.get("a").observers.size).toBe(1);
 
 	x.set("a", 2);
-	observable = adm.data.atomMap.get("a");
+	observable = (adm as any).valuesMap.get("a");
 
 	expect(aValue).toBe(2);
 	expect(observable.observers.size).toBe(1);
