@@ -1,8 +1,8 @@
-import CoreGraph, { ObservableNode } from "../core/graph";
+import { Graph as CoreGraph, ObservableNode } from "../core/graph";
 import { getAdministration, isObservable } from "../observables/utils/lookup";
-import AtomNode from "../core/nodes/atom";
-import ComputedNode from "../core/nodes/computed";
-import Signal from "../observables/signal";
+import { AtomNode } from "../core/nodes/atom";
+import { ComputedNode } from "../core/nodes/computed";
+import { Signal } from "../observables/signal";
 
 const nodeMap = new WeakMap();
 
@@ -31,7 +31,7 @@ export type Graph = {
 	task<T>(promise: Promise<T>): Promise<T>;
 };
 
-export default function makeGraph(): Graph {
+export function makeGraph(): Graph {
 	return new CoreGraph();
 }
 

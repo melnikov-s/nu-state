@@ -1,6 +1,6 @@
 import { runInAction } from "./graph";
 
-export default function action<T extends unknown[], U>(
+export function action<T extends unknown[], U>(
 	func: (...args: T) => U
 ): (...args: T) => U {
 	return function (this: unknown, ...args: T): U {

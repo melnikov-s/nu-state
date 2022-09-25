@@ -1,7 +1,7 @@
-import makeListener, { Listener } from "./listener";
+import { listener as makeListener, Listener } from "./listener";
 import { Graph } from "./graph";
 
-export default function effect(
+export function effect(
 	callback: (t: Listener) => void,
 	opts?: { graph?: Graph }
 ): () => void {

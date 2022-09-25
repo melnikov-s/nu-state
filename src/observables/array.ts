@@ -1,19 +1,19 @@
-import Graph from "../core/graph";
-import { getAdministration, getObservable, source } from "./utils/lookup";
-import Administration from "./utils/Administration";
-import AtomMap from "./utils/AtomMap";
-import Atom from "../core/nodes/atom";
+import { Graph } from "../core/graph";
+import { getAdministration, getObservable, getSource } from "./utils/lookup";
+import { Administration } from "./utils/Administration";
+import { AtomMap } from "./utils/AtomMap";
+import { AtomNode } from "../core/nodes/atom";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
 	valuesMap: AtomMap<number>;
-	keysAtom: Atom;
+	keysAtom: AtomNode;
 
 	constructor(source: T[] = [], graph: Graph) {
 		super(source, graph);
 		this.proxyTraps.get = (_, name) => this.proxyGet(name);
 		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
 		this.valuesMap = new AtomMap(graph);
-		this.keysAtom = new Atom(graph);
+		this.keysAtom = new AtomNode(graph);
 	}
 
 	private proxyGet(name: PropertyKey): unknown {
@@ -67,7 +67,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 	set(index: number, newValue: T): void {
 		const values = this.source;
-		const targetValue = source(newValue);
+		const targetValue = getSource(newValue);
 
 		if (index < values.length) {
 			// update at index in range
@@ -114,7 +114,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 		if (newItems) {
 			for (let i = 0; i < newItems.length; i++) {
-				newTargetItems[i] = source(newItems[i]);
+				newTargetItems[i] = getSource(newItems[i]);
 			}
 		}
 
@@ -252,7 +252,7 @@ const arrayMethods: any = {
 		arrayMethods[method] = function (this: unknown[]): unknown {
 			const adm = getAdministration(this);
 			adm.reportObserved(false);
-			const sourceArr = source(this);
+			const sourceArr = getSource(this);
 
 			return sourceArr[method].apply(sourceArr, arguments);
 		};

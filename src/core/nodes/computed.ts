@@ -1,4 +1,5 @@
-import Graph, {
+import {
+	Graph,
 	Computed,
 	ObservableNode,
 	ObserverNode,
@@ -6,7 +7,7 @@ import Graph, {
 } from "../graph";
 import { defaultEquals } from "../../utils";
 
-export default class ComputedNode<T> implements Computed<T> {
+export class ComputedNode<T> implements Computed<T> {
 	readonly nodeType = nodeTypes.computed;
 	private dirty = true;
 	private isComputing = false;

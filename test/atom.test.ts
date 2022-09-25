@@ -1,5 +1,4 @@
 import {
-	observable,
 	computed,
 	effect,
 	atom,

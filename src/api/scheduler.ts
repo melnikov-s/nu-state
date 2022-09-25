@@ -1,7 +1,7 @@
-import makeListener, { Listener } from "./listener";
+import { listener as makeListener, Listener } from "./listener";
 import { Graph, resolveGraph } from "./graph";
-import reaction from "./reaction";
-import effect from "./effect";
+import { reaction } from "./reaction";
+import { effect } from "./effect";
 
 export type Scheduler = {
 	listener: (callback: () => void) => Listener;

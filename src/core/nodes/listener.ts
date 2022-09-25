@@ -1,6 +1,6 @@
-import Graph, { Listener, ObservableNode, nodeTypes } from "../graph";
+import { Graph, Listener, ObservableNode, nodeTypes } from "../graph";
 
-export default class ListenerNode implements Listener {
+export class ListenerNode implements Listener {
 	readonly nodeType = nodeTypes.listener;
 	readonly observing: Set<ObservableNode> = new Set();
 	private disposed = false;

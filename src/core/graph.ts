@@ -1,67 +1,3 @@
-/*
-
-Both observers and observables are nodes in a directed dependency graph. 
-The connections between the nodes are made at runtime and start with
-the listener node. As the listener node executes it makes a connection
-with any computed and observable node that is read. Once the listener is done
-with its execution then that path of the graph becomes completed.
-When a change is made to an observer node it will traverse down the graph
-invalidating that path until it reaches the listener. The listener will
-then re-execute and recreates a new path.
-
-Below is the general shape of the graph:
-
-                 atoms occupy the top of the graph
-                 and have no dependencies
- +------------+  +------------+  +-------------+
- |            |  |            |  |             |
- | atom       |  |  atom      |  |  atom       |
- |            |  |            |  |             |
- |            |  |            |  |             |
- +--+---+--+--+  +-----+------+  +-------+----++
-    |   |  |           |                 |    |
-==============================================================================
-    |   |  |           |                 |    |
-    |   |  +-------------------------+   |    |
-    |   |              |             |   |    |
-    |   |              |             |   |    +---------+
-    |   +------+       |             |   |              |
-    |        +---------+-+           |   |              |
-    |        |           |         +-+---+-------+    +-+----------+
-    |        | computed  |         |             |    |            |
-    |        |           |         |  computed   |    |  computed  |
-    |        |           |         |             |    |            |
-    |        +--------+--+         |             |    |            |
-    |                 |            +-------+---+-+    +-------+----+
-    |                 |                    |   |              |
-    |      computed nodes live in the middle of the graph and |
-    |      can be n levels deep, having atoms
-    |      and other computed nodes as their dependencies     |
-    |                 +----------+---------+   |              |
-    |                            |             |              |
-    |                            |             |              |
-    |                   +--------+---------+   |              |
-    |                   |                  |   |              |
-    |                   |    computed      |   |              |
-    |                   |                  |   |              |
-    +--------------+    |                  |   |              |
-                   |    +----------+-------+   |              |
-                   |               |           +------------+ |
-==============================================================================
-                   +-----------|   |                        | |
-                             +-----+--------+             +-+-+---------+
-                             |              |             |             |
-                             |   listener   |             |   listener  |
-                             |              |             |             |
-                             |              |             |             |
-                             +--------------+             +-------------+
-
-                               listeners occupy the bottom of the graph
-                               and have observers and computed nodes
-                               as their dependencies but do not have any
-                               dependents
-*/
-
 export const nodeTypes = {
 	atom: 1,
 	computed: 2,
@@ -100,7 +36,7 @@ export type ObserverNode = Computed | Listener;
 export type ObservableNode = Computed | Atom;
 export type Node = ObserverNode | ObservableNode;
 
-export default class Graph {
+export class Graph {
 	private changedObservables: Map<Node, unknown> = new Map();
 	private inBatch = false;
 	private actionsEnforced = false;

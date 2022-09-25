@@ -1,4 +1,4 @@
-import ListenerNode from "../core/nodes/listener";
+import { ListenerNode } from "../core/nodes/listener";
 import { resolveGraph, Graph } from "./graph";
 
 export type Listener = {
@@ -7,7 +7,7 @@ export type Listener = {
 	isDisposed: boolean;
 };
 
-export default function listener(
+export function listener(
 	callback: (listener: Listener) => void,
 	opts?: { graph?: Graph }
 ): Listener {
