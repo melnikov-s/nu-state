@@ -30,7 +30,6 @@ import {
 	reportChanged,
 } from "./api/graph";
 import { getSource, isObservable } from "./observables/utils/lookup";
-import { getAdministration } from "./observables/utils/lookup";
 import {
 	Scheduler,
 	createScheduler,
@@ -38,6 +37,7 @@ import {
 	createMicroTaskScheduler,
 } from "./api/scheduler";
 import { Observable } from "./api/ObservableClass";
+import { extendObservableProxy } from "./api/extendObservableProxy";
 
 export {
 	action,
@@ -52,7 +52,6 @@ export {
 	enforceActions,
 	reportChanged,
 	reportObserved,
-	getAdministration as unstable_getAdministration,
 	getDefaultGraph,
 	getInternalComputedNode,
 	getSource as source,
@@ -70,6 +69,7 @@ export {
 	reaction,
 	runInAction,
 	task,
+	extendObservableProxy as unstable_extendObservableProxy,
 	untracked,
 };
 

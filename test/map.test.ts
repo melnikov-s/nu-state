@@ -4,8 +4,8 @@ import {
 	isObservable,
 	reaction,
 	source,
-	unstable_getAdministration,
 } from "../src/main";
+import { getAdministration } from "../src/observables/utils/lookup";
 
 const map = <K = any, V = any>(obj: Map<K, V> = new Map()): Map<K, V> => {
 	return observable(obj);
@@ -321,7 +321,7 @@ test("[mobx-test] cleanup", function () {
 		aValue = x.get("a");
 	});
 
-	const adm = unstable_getAdministration(x);
+	const adm = getAdministration(x);
 
 	let observable = (adm as any).valuesMap.get("a");
 
