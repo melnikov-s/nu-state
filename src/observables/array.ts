@@ -1,6 +1,5 @@
 import Graph from "../core/graph";
 import { getAdministration, getObservable, source } from "./utils/lookup";
-import { notifyArrayUpdate, notifySpliceArray } from "./utils/observe";
 import Administration from "./utils/Administration";
 import AtomMap from "./utils/AtomMap";
 import Atom from "../core/nodes/atom";
@@ -77,7 +76,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 			const changed = targetValue !== oldValue;
 			if (changed) {
 				values[index] = targetValue;
-				notifyArrayUpdate(this.proxy, index, oldValue, targetValue);
 				this.onArrayChanged(false, index, 1);
 			}
 		} else if (index === values.length) {
@@ -131,7 +129,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		const res = this.spliceItemsIntoValues(index, deleteCount, newTargetItems);
 
 		if (deleteCount !== 0 || newTargetItems.length !== 0) {
-			notifySpliceArray(this.proxy, index, newTargetItems, res);
 			this.onArrayChanged(
 				length !== this.source.length,
 				index,

@@ -1,7 +1,6 @@
 import Graph from "../core/graph";
 import Atom from "../core/nodes/atom";
 import { getObservable, source, getAdministration } from "./utils/lookup";
-import { notifyAdd, notifyDelete } from "./utils/observe";
 import Administration, {
 	getAdministration as hasObservable,
 } from "./utils/Administration";
@@ -87,7 +86,6 @@ export class SetAdministration<T>
 		if (!this.hasEntry(value)) {
 			const target = source(value);
 			this.source.add(target);
-			notifyAdd(this.proxy, target);
 			this.onSetChange(target);
 		}
 
@@ -99,7 +97,6 @@ export class SetAdministration<T>
 			const target = source(value);
 			this.source.delete(target);
 			this.source.delete(value);
-			notifyDelete(this.proxy, target);
 			this.onSetChange(target);
 
 			return true;

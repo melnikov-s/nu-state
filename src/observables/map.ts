@@ -1,7 +1,6 @@
 import Atom from "../core//nodes/atom";
 import Graph from "../core/graph";
 import { getObservable, source, getAdministration } from "./utils/lookup";
-import { notifyUpdate, notifyAdd, notifyDelete } from "./utils/observe";
 import Administration, {
 	getAdministration as hasObservable,
 } from "./utils/Administration";
@@ -137,9 +136,6 @@ export class MapAdministration<K, V>
 				if (!hasKey) {
 					this.hasMap.reportChanged(targetKey);
 					this.keysAtom.reportChanged();
-					notifyAdd(this.proxy, targetValue, targetKey);
-				} else {
-					notifyUpdate(this.proxy, targetValue, oldValue, targetKey);
 				}
 			});
 		}
@@ -151,15 +147,12 @@ export class MapAdministration<K, V>
 		const targetKey = source(key);
 
 		if (this.hasEntry(key)) {
-			const oldValue = this.data.peek(targetKey);
-
 			this.graph.batch(() => {
 				this.flushChange();
 				this.keysAtom.reportChanged();
 				this.hasMap.reportChanged(targetKey);
 				this.data.delete(targetKey);
 				this.data.delete(key);
-				notifyDelete(this.proxy, oldValue, targetKey);
 			});
 
 			return true;
