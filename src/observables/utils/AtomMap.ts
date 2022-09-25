@@ -1,10 +1,10 @@
-import Atom from "../../core/nodes/atom";
-import Graph from "../../core/graph";
+import { AtomNode } from "../../core/nodes/atom";
+import { Graph } from "../../core/graph";
 import { isNonPrimitive } from "../../utils";
 
-export default class AtomMap<K> {
-	private map: Map<unknown, Atom> | undefined;
-	private weakMap: WeakMap<object, Atom> | undefined;
+export class AtomMap<K> {
+	private map: Map<unknown, AtomNode> | undefined;
+	private weakMap: WeakMap<object, AtomNode> | undefined;
 	private graph: Graph;
 	private readonly clearOnUnobserved: boolean;
 
@@ -13,7 +13,7 @@ export default class AtomMap<K> {
 		this.clearOnUnobserved = clearOnUnobserved;
 	}
 
-	get(key: unknown): Atom | undefined {
+	get(key: unknown): AtomNode | undefined {
 		return isNonPrimitive(key) ? this.weakMap?.get(key) : this.map?.get(key);
 	}
 
@@ -21,20 +21,20 @@ export default class AtomMap<K> {
 		isNonPrimitive(key) ? this.weakMap?.delete(key) : this.map?.delete(key);
 	}
 
-	getOrCreate(key: K): Atom {
-		let entry: Atom | undefined = this.get(key);
+	getOrCreate(key: K): AtomNode {
+		let entry: AtomNode | undefined = this.get(key);
 
 		if (!entry) {
 			if (isNonPrimitive(key)) {
 				this.weakMap = this.weakMap ?? new WeakMap();
 
-				entry = new Atom(this.graph);
+				entry = new AtomNode(this.graph);
 
 				this.weakMap.set(key, entry);
 			} else {
 				this.map = this.map ?? new Map();
 
-				entry = new Atom(this.graph);
+				entry = new AtomNode(this.graph);
 				if (this.clearOnUnobserved) {
 					const unsub = this.graph.onObservedStateChange(entry, (observing) => {
 						if (!observing) {

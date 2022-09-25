@@ -1,10 +1,11 @@
-import Graph from "../core/graph";
-import Atom from "../core/nodes/atom";
-import { getObservable, source, getAdministration } from "./utils/lookup";
-import Administration, {
+import { Graph } from "../core/graph";
+import { AtomNode } from "../core/nodes/atom";
+import { getObservable, getSource, getAdministration } from "./utils/lookup";
+import {
+	Administration,
 	getAdministration as hasObservable,
 } from "./utils/Administration";
-import AtomMap from "./utils/AtomMap";
+import { AtomMap } from "./utils/AtomMap";
 
 type Collection<K, V> = Set<K> | Map<K, V>;
 
@@ -13,13 +14,13 @@ export class CollectionAdministration<K, V = K> extends Administration<
 > {
 	isMap: boolean;
 	hasMap: AtomMap<K>;
-	keysAtom: Atom;
+	keysAtom: AtomNode;
 
 	constructor(source: Collection<K, V>, graph: Graph) {
 		super(source, graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
-		this.keysAtom = new Atom(graph);
+		this.keysAtom = new AtomNode(graph);
 		this.isMap =
 			typeof (source as Map<K, V>).set === "function" &&
 			typeof (source as Map<K, V>).get === "function";
@@ -43,7 +44,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 	private hasEntry(key: K): boolean {
 		return !!(
-			this.source.has(source(key)) ||
+			this.source.has(getSource(key)) ||
 			(hasObservable(key) && this.source.has(getObservable(key, this.graph)))
 		);
 	}
@@ -95,7 +96,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 	add(value: K): this {
 		if (!this.hasEntry(value)) {
-			const target = source(value);
+			const target = getSource(value);
 			(this.source as Set<K>).add(target);
 			this.onCollectionChange(target);
 		}
@@ -105,7 +106,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 	delete(value: K): boolean {
 		if (this.hasEntry(value)) {
-			const target = source(value);
+			const target = getSource(value);
 			this.source.delete(target);
 			this.source.delete(value);
 			this.onCollectionChange(target);
@@ -117,7 +118,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 	has(value: K): boolean {
 		if (this.graph.isTracking()) {
-			const target = source(value);
+			const target = getSource(value);
 			this.hasMap.reportObserved(target);
 			this.atom.reportObserved();
 		}
@@ -168,7 +169,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	}
 
 	get(key: K): V | undefined {
-		const targetKey = source(key);
+		const targetKey = getSource(key);
 		const sourceMap = this.source as Map<K, V>;
 
 		const has = this.has(key);
@@ -185,8 +186,8 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	}
 
 	set(key: K, value: V): this {
-		const targetKey = source(key);
-		const targetValue = source(value);
+		const targetKey = getSource(key);
+		const targetValue = getSource(value);
 		const sourceMap = this.source as Map<K, V>;
 
 		const hasKey = this.hasEntry(key);

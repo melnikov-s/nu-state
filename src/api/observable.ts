@@ -6,7 +6,7 @@ export type ObservableOptions = {
 	graph?: Graph;
 };
 
-export default function observable<T extends object>(
+export function observable<T extends object>(
 	object: T,
 	opts?: ObservableOptions
 ): T {

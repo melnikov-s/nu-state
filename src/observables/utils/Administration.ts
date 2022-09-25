@@ -1,6 +1,6 @@
-import Graph from "../../core/graph";
-import Atom from "../../core/nodes/atom";
-import AtomMap from "./AtomMap";
+import { Graph } from "../../core/graph";
+import { AtomNode } from "../../core/nodes/atom";
+import { AtomMap } from "./AtomMap";
 
 const administrationMap: WeakMap<object, Administration> = new WeakMap();
 
@@ -10,11 +10,11 @@ export function getAdministration(obj: unknown): Administration | undefined {
 
 let circularRefSet: WeakSet<object> | null = null;
 
-export default class Administration<T extends object = object> {
+export class Administration<T extends object = object> {
 	readonly proxy: T;
 	readonly source: T;
 	readonly graph: Graph;
-	readonly atom: Atom;
+	readonly atom: AtomNode;
 	readonly proxyTraps: ProxyHandler<T> = {
 		preventExtensions(): boolean {
 			throw new Error(`observable objects cannot be frozen`);
@@ -22,10 +22,10 @@ export default class Administration<T extends object = object> {
 		},
 	};
 	protected valuesMap?: AtomMap<unknown>;
-	private forceObservedAtoms?: Atom[];
+	private forceObservedAtoms?: AtomNode[];
 
 	constructor(source: T, graph: Graph) {
-		this.atom = new Atom(graph);
+		this.atom = new AtomNode(graph);
 		this.source = source;
 		this.proxy = new Proxy(this.source, this.proxyTraps) as T;
 		this.graph = graph;
@@ -60,7 +60,7 @@ export default class Administration<T extends object = object> {
 
 		circularRefSet!.add(this);
 
-		const atom = new Atom(this.graph);
+		const atom = new AtomNode(this.graph);
 		if (!this.forceObservedAtoms) {
 			this.forceObservedAtoms = [];
 		}
@@ -79,7 +79,7 @@ export default class Administration<T extends object = object> {
 		callback: (observing: boolean) => void,
 		key: unknown
 	): () => void {
-		let atom: Atom = this.atom;
+		let atom = this.atom;
 
 		if (key) {
 			if (!this.valuesMap) {

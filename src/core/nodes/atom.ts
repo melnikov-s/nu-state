@@ -1,6 +1,6 @@
-import Graph, { Atom, ObserverNode, nodeTypes } from "../graph";
+import { Graph, Atom, ObserverNode, nodeTypes } from "../graph";
 
-export default class AtomNode<T = unknown> implements Atom<T> {
+export class AtomNode<T = unknown> implements Atom<T> {
 	readonly nodeType = nodeTypes.atom;
 	readonly observers: Set<ObserverNode> = new Set();
 

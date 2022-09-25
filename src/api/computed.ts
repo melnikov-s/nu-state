@@ -1,4 +1,4 @@
-import ComputedNode from "../core/nodes/computed";
+import { ComputedNode } from "../core/nodes/computed";
 import { resolveGraph, Graph, setNode, getNode } from "./graph";
 
 export type Computed<T> = () => T;
@@ -24,7 +24,7 @@ const internalComputedNodes = new WeakMap<
 	InternalComputedNode<unknown>
 >();
 
-export default function computed<T>(
+export function computed<T>(
 	fn: () => T,
 	opts?: ComputedOptions<T>
 ): Computed<T> {

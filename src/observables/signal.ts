@@ -1,11 +1,11 @@
-import Graph from "../core/graph";
+import { Graph } from "../core/graph";
 import { defaultEquals } from "../utils";
-import Atom from "../core/nodes/atom";
+import { AtomNode } from "../core/nodes/atom";
 
-export default class Signal<T> {
+export class Signal<T> {
 	value: T;
 	graph: Graph;
-	atom: Atom<T>;
+	atom: AtomNode<T>;
 	comparator: typeof defaultEquals;
 
 	constructor(
@@ -16,7 +16,7 @@ export default class Signal<T> {
 		this.value = value;
 		this.graph = graph;
 		this.comparator = comparator;
-		this.atom = new Atom(graph, this.equals.bind(this));
+		this.atom = new AtomNode(graph, this.equals.bind(this));
 	}
 
 	equals(value: T): boolean {

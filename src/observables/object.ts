@@ -1,18 +1,18 @@
-import Atom from "../core/nodes/atom";
-import Graph from "../core/graph";
-import { getObservable, source, getAction } from "./utils/lookup";
+import { AtomNode } from "../core/nodes/atom";
+import { Graph } from "../core/graph";
+import { getObservable, getSource, getAction } from "./utils/lookup";
 import {
 	isPropertyKey,
 	getPropertyDescriptor,
 	PropertyType,
 	getPropertyType,
 } from "../utils";
-import Administration, { getAdministration } from "./utils/Administration";
-import AtomMap from "./utils/AtomMap";
-import ComputedNode from "../core/nodes/computed";
+import { Administration, getAdministration } from "./utils/Administration";
+import { AtomMap } from "./utils/AtomMap";
+import { ComputedNode } from "../core/nodes/computed";
 
 export class ObjectAdministration<T extends object> extends Administration<T> {
-	keysAtom: Atom;
+	keysAtom: AtomNode;
 	hasMap: AtomMap<PropertyKey>;
 	valuesMap: AtomMap<PropertyKey>;
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
@@ -20,7 +20,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 	constructor(source: T = {} as T, graph: Graph) {
 		super(source, graph);
-		this.keysAtom = new Atom(graph);
+		this.keysAtom = new AtomNode(graph);
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new AtomMap(graph);
 		this.types = new Map();
@@ -211,7 +211,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
-		const targetValue = source(newValue);
+		const targetValue = getSource(newValue);
 
 		if (!had || oldValue !== targetValue) {
 			this.set(key, targetValue);
