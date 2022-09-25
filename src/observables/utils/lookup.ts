@@ -1,6 +1,5 @@
 import Graph from "../../core/graph";
-import { MapAdministration } from "../map";
-import { SetAdministration } from "../set";
+import { CollectionAdministration } from "../collection";
 import { ObjectAdministration } from "../object";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
@@ -10,9 +9,9 @@ import { isPlainObject } from "../../utils";
 export function getAdministration<T extends object>(
 	obj: T
 ): T extends Set<infer S>
-	? SetAdministration<S>
+	? CollectionAdministration<S>
 	: T extends Map<infer K, infer V>
-	? MapAdministration<K, V>
+	? CollectionAdministration<K, V>
 	: T extends Array<infer R>
 	? ArrayAdministration<R>
 	: T extends Date
@@ -78,9 +77,9 @@ export function getObservable<T>(
 		if (Array.isArray(obj)) {
 			Adm = ArrayAdministration;
 		} else if (obj instanceof Map || obj instanceof WeakMap) {
-			Adm = MapAdministration;
+			Adm = CollectionAdministration;
 		} else if (obj instanceof Set || obj instanceof WeakSet) {
-			Adm = SetAdministration;
+			Adm = CollectionAdministration;
 		} else if (obj instanceof Date) {
 			Adm = DateAdministration;
 		} else if (!observeClass && !isPlainObject(value)) {
