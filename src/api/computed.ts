@@ -1,5 +1,5 @@
 import { ComputedNode } from "../core/nodes/computed";
-import { resolveGraph, Graph, setNode, getNode } from "./graph";
+import { setNode, getNode } from "./graph";
 
 export type Computed<T> = () => T;
 
@@ -13,7 +13,6 @@ export type InternalComputedNode<T> = {
 };
 
 export type ComputedOptions<T> = {
-	graph?: Graph;
 	equals?: (a: T, b: T) => boolean;
 	keepAlive?: boolean;
 	context?: unknown;
@@ -29,7 +28,6 @@ export function computed<T>(
 	opts?: ComputedOptions<T>
 ): Computed<T> {
 	const computedNode = new ComputedNode(
-		resolveGraph(opts?.graph),
 		fn,
 		opts?.equals,
 		opts?.keepAlive,

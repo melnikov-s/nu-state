@@ -1,5 +1,4 @@
 import { AtomNode } from "../core/nodes/atom";
-import { resolveGraph, Graph } from "./graph";
 
 export type Atom<T = unknown> = {
 	reportChanged: (value?: T) => void;
@@ -7,8 +6,7 @@ export type Atom<T = unknown> = {
 };
 
 export function atom<T = unknown>(opts?: {
-	graph?: Graph;
 	equals?: (v: T) => boolean;
 }): Atom<T> {
-	return new AtomNode(resolveGraph(opts?.graph), opts?.equals);
+	return new AtomNode(opts?.equals);
 }

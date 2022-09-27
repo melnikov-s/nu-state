@@ -1,10 +1,10 @@
-import { Graph } from "../../core/graph";
 import { CollectionAdministration } from "../collection";
 import { ObjectAdministration } from "../object";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
 import { Administration, getAdministration as getAdm } from "./Administration";
 import { isPlainObject } from "../../utils";
+import { runInAction } from "../../core/graph";
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -28,7 +28,7 @@ export function getSource<T>(obj: T): T {
 	return adm ? (adm.source as unknown as T) : obj;
 }
 
-export function getAction<T extends Function>(fn: T, graph: Graph): T {
+export function getAction<T extends Function>(fn: T): T {
 	let action = actionsMap.get(fn);
 
 	if (!action) {
@@ -37,7 +37,7 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 				return new (fn as any)(...args);
 			}
 
-			return graph.runInAction(() => fn.apply(this, args), false);
+			return runInAction(() => fn.apply(this, args), false);
 		};
 
 		actionsMap.set(fn, action);
@@ -46,18 +46,10 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	return action as T;
 }
 
-export function getObservable<T>(
-	value: T,
-	graph: Graph,
-	observeClass: boolean = false
-): T {
+export function getObservable<T>(value: T, observeClass: boolean = false): T {
 	const adm = getAdm(value);
 
 	if (adm) {
-		if (adm.graph !== graph) {
-			throw new Error("observables can only exists on a single graph");
-		}
-
 		return adm.proxy as unknown as T;
 	}
 
@@ -71,8 +63,7 @@ export function getObservable<T>(
 	) {
 		const obj = value as unknown as object;
 
-		let Adm: new (obj: any, graph: Graph) => Administration =
-			ObjectAdministration;
+		let Adm: new (obj: any) => Administration = ObjectAdministration;
 
 		if (Array.isArray(obj)) {
 			Adm = ArrayAdministration;
@@ -86,7 +77,7 @@ export function getObservable<T>(
 			return value;
 		}
 
-		const adm = new Adm(obj, graph);
+		const adm = new Adm(obj);
 		return adm.proxy as unknown as T;
 	}
 

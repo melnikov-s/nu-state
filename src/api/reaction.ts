@@ -1,10 +1,8 @@
 import { listener as makeListener, Listener } from "./listener";
-import { Graph } from "./graph";
 
 export function reaction<T>(
 	track: () => T,
 	callback: (a: T, listener: Listener) => void,
-	opts?: { graph?: Graph }
 ): () => void {
 	let value: T;
 
@@ -15,7 +13,7 @@ export function reaction<T>(
 			value = newValue;
 			callback(value, listener);
 		}
-	}, opts);
+	});
 
 	value = listener.track(track);
 

@@ -1,5 +1,4 @@
 import { ListenerNode } from "../core/nodes/listener";
-import { resolveGraph, Graph } from "./graph";
 
 export type Listener = {
 	dispose: () => void;
@@ -9,7 +8,6 @@ export type Listener = {
 
 export function listener(
 	callback: (listener: Listener) => void,
-	opts?: { graph?: Graph }
 ): Listener {
-	return new ListenerNode(resolveGraph(opts?.graph), callback);
+	return new ListenerNode(callback);
 }

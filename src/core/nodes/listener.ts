@@ -1,14 +1,12 @@
-import { Graph, Listener, ObservableNode, nodeTypes } from "../graph";
+import { runObserver, remove } from "../graph";
+import { Listener, ObservableNode, nodeTypes } from "../types";
 
 export class ListenerNode implements Listener {
 	readonly nodeType = nodeTypes.listener;
 	readonly observing: Set<ObservableNode> = new Set();
 	private disposed = false;
 
-	constructor(
-		readonly graph: Graph,
-		readonly callback: (listener: ListenerNode) => void
-	) {}
+	constructor(readonly callback: (listener: ListenerNode) => void) {}
 
 	get isDisposed(): boolean {
 		return this.disposed;
@@ -16,7 +14,7 @@ export class ListenerNode implements Listener {
 
 	dispose(): void {
 		this.disposed = true;
-		this.graph.remove(this);
+		remove(this);
 	}
 
 	react(): void {
@@ -26,6 +24,6 @@ export class ListenerNode implements Listener {
 	}
 
 	track<T>(trackFn: () => T): T {
-		return this.graph.runObserver(this, trackFn);
+		return runObserver(this, trackFn);
 	}
 }

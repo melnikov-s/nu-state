@@ -1,10 +1,25 @@
-import { Graph as CoreGraph, ObservableNode } from "../core/graph";
 import { getAdministration, isObservable } from "../observables/utils/lookup";
 import { AtomNode } from "../core/nodes/atom";
 import { ComputedNode } from "../core/nodes/computed";
 import { Signal } from "../observables/signal";
+import { onObservedStateChange as coreOnObservedStateChange, isObserved as coreIsObserved } from "../core/graph";
 
 const nodeMap = new WeakMap();
+
+export {
+	runInAction,
+	batch,
+	isInAction,
+	isInBatch,
+	isTracking,
+	task,
+	untracked,
+	enforceActions,
+	onReactionsComplete
+} from "../core/graph";
+
+export { isObservable, getSource as source } from '../observables/utils/lookup';
+
 
 export function setNode(value: object, node: object): void {
 	nodeMap.set(value, node);
@@ -14,94 +29,21 @@ export function getNode(value: object): any {
 	return nodeMap.get(value);
 }
 
-export type Graph = {
-	enforceActions: (enforce: boolean) => void;
-	isInAction: () => boolean;
-	isInBatch: () => boolean;
-	isObserved: (node: ObservableNode) => boolean;
-	isTracking: () => boolean;
-	runInAction: <T>(fn: () => T) => T;
-	batch: <T>(fn: () => T) => T;
-	startAction: () => void;
-	endAction: () => void;
-	startBatch: () => void;
-	endBatch: () => void;
-	untracked: <T>(fn: () => T) => T;
-	onReactionsComplete: (callback: () => void) => () => void;
-	task<T>(promise: Promise<T>): Promise<T>;
-};
-
-export function makeGraph(): Graph {
-	return new CoreGraph();
-}
-
-let defaultGraph: Graph;
-
-export function getDefaultGraph(): Graph {
-	return (defaultGraph = defaultGraph ?? makeGraph());
-}
-
-export function setDefaultGraph(graph: Graph): void {
-	defaultGraph = graph;
-}
-
-export function resolveGraph(graph: Graph | null | undefined): CoreGraph {
-	return (graph ?? getDefaultGraph()) as CoreGraph;
-}
-
-export function enforceActions(enforce: boolean): void {
-	return getDefaultGraph().enforceActions(enforce);
-}
-
 export function isObserved(
 	observable: object,
-	{ graph = defaultGraph } = {}
 ): boolean {
 	const target = getNode(observable) ?? observable;
 
 	if (target instanceof AtomNode || target instanceof ComputedNode) {
-		return graph.isObserved(target as ObservableNode);
+		return coreIsObserved(target);
 	} else if (target instanceof Signal) {
-		return graph.isObserved(target.atom);
+		return coreIsObserved(target.atom);
 	} else if (isObservable(target)) {
 		const adm = getAdministration(target as object);
-		return graph.isObserved(adm.atom);
+		return coreIsObserved(adm.atom);
 	}
 
 	return false;
-}
-
-export function isInAction(): boolean {
-	return getDefaultGraph().isInAction();
-}
-
-export function isInBatch(): boolean {
-	return getDefaultGraph().isInBatch();
-}
-
-export function isTracking(): boolean {
-	return getDefaultGraph().isTracking();
-}
-
-export function batch<T>(fn: () => T): T {
-	return getDefaultGraph().batch(fn);
-}
-
-export function runInAction<T>(fn: () => T): T {
-	return getDefaultGraph().runInAction(fn);
-}
-
-export function task<T>(promise: Promise<T>): Promise<T> {
-	return getDefaultGraph().task(promise);
-}
-
-export function untracked<T>(fn: () => T): T {
-	return getDefaultGraph().untracked(fn);
-}
-
-export function source<T extends object>(obj: T): T {
-	const adm = getAdministration(obj);
-	return adm?.source;
 }
 
 export function reportChanged<T extends object>(obj: T): T {
@@ -125,10 +67,6 @@ export function reportObserved<T extends object>(
 	adm.reportObserved(opts?.deep);
 
 	return obj;
-}
-
-export function onReactionsComplete(callback: () => void): () => void {
-	return getDefaultGraph().onReactionsComplete(callback);
 }
 
 type KeyType<T> = T extends Set<infer R>
@@ -174,7 +112,7 @@ export function onObservedStateChange<T extends object>(
 			);
 		}
 
-		return target.graph.onObservedStateChange(
+		return coreOnObservedStateChange(
 			(target as any).atom || (target as any),
 			cb
 		);

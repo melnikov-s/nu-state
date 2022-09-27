@@ -4,7 +4,6 @@ import {
 	runInAction,
 	effect,
 	computed,
-	Computed,
 	isObserved,
 	onObservedStateChange,
 	signal,
@@ -51,7 +50,7 @@ test("will only used cached value when listened to", () => {
 	});
 	const u = reaction(
 		() => c(),
-		() => {}
+		() => { }
 	);
 
 	expect(count).toBe(1);
@@ -78,7 +77,7 @@ test("will only used cached value when listened to (deep)", () => {
 
 	const u = reaction(
 		() => c2(),
-		() => {}
+		() => { }
 	);
 
 	expect(count).toBe(1);
@@ -157,12 +156,12 @@ test("will not allow changing observable values within a computed", () => {
 
 	reaction(
 		() => get2(),
-		() => {}
+		() => { }
 	);
 	expect(() =>
 		reaction(
 			() => c1(),
-			() => {}
+			() => { }
 		)
 	).toThrowError();
 });
@@ -178,7 +177,7 @@ test("observable values only observed by the computed can change", () => {
 	expect(() =>
 		reaction(
 			() => c1(),
-			() => {}
+			() => { }
 		)
 	).not.toThrow();
 });
@@ -194,7 +193,7 @@ test("will allow creating new observable values within a computed", () => {
 	expect(() =>
 		reaction(
 			() => c() + get2() + c(),
-			() => {}
+			() => { }
 		)
 	).not.toThrow();
 });
@@ -398,7 +397,7 @@ test("will observe sibling computed values", () => {
 	const last = observables[observables.length - 1];
 	reaction(
 		() => last(),
-		() => {}
+		() => { }
 	);
 	expect(last()).toBe(11);
 

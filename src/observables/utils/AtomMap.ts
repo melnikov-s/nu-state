@@ -1,15 +1,13 @@
 import { AtomNode } from "../../core/nodes/atom";
-import { Graph } from "../../core/graph";
+import { onObservedStateChange, isTracking } from "../../core/graph";
 import { isNonPrimitive } from "../../utils";
 
 export class AtomMap<K> {
 	private map: Map<unknown, AtomNode> | undefined;
 	private weakMap: WeakMap<object, AtomNode> | undefined;
-	private graph: Graph;
 	private readonly clearOnUnobserved: boolean;
 
-	constructor(graph: Graph, clearOnUnobserved: boolean = false) {
-		this.graph = graph;
+	constructor(clearOnUnobserved: boolean = false) {
 		this.clearOnUnobserved = clearOnUnobserved;
 	}
 
@@ -28,15 +26,15 @@ export class AtomMap<K> {
 			if (isNonPrimitive(key)) {
 				this.weakMap = this.weakMap ?? new WeakMap();
 
-				entry = new AtomNode(this.graph);
+				entry = new AtomNode();
 
 				this.weakMap.set(key, entry);
 			} else {
 				this.map = this.map ?? new Map();
 
-				entry = new AtomNode(this.graph);
+				entry = new AtomNode();
 				if (this.clearOnUnobserved) {
-					const unsub = this.graph.onObservedStateChange(entry, (observing) => {
+					const unsub = onObservedStateChange(entry, (observing) => {
 						if (!observing) {
 							this.map?.delete(key);
 							unsub();
@@ -52,7 +50,7 @@ export class AtomMap<K> {
 	}
 
 	reportObserved(key: K): void {
-		if (this.graph.isTracking()) {
+		if (isTracking()) {
 			this.getOrCreate(key).reportObserved();
 		}
 	}

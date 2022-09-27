@@ -1,9 +1,8 @@
 import { Signal as SignalClass } from "../observables/signal";
 import { defaultEquals } from "../utils";
-import { Graph, resolveGraph, setNode } from "./graph";
+import { setNode } from "./graph";
 
 export type SignalOptions = {
-	graph?: Graph;
 	equals?: typeof defaultEquals;
 };
 
@@ -12,7 +11,6 @@ export type Signal<T> = [get: () => T, set: (v: T) => T];
 export function signal<T>(initialValue: T, opts?: SignalOptions): Signal<T> {
 	const signal = new SignalClass(
 		initialValue,
-		resolveGraph(opts?.graph),
 		opts?.equals
 	);
 
