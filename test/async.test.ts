@@ -1,10 +1,8 @@
 import {
 	observable,
 	task,
-	graph,
 	reaction,
 	runInAction,
-	getDefaultGraph,
 	enforceActions,
 	batch,
 	isInBatch,
@@ -36,8 +34,7 @@ function delayFn(time: number, fn: () => void) {
 	});
 }
 
-const expectNoActionsRunning = () =>
-	expect(getDefaultGraph().isInAction()).toBe(false);
+const expectNoActionsRunning = () => expect(isInAction()).toBe(false);
 
 const actionAsync =
 	<T>(fn: (...args: any[]) => T) =>
@@ -69,13 +66,11 @@ test("can't call task outside of an action", async () => {
 });
 
 test("if task is called within an action it must return a promise", () => {
-	const g = graph();
-
 	const f = function () {
-		g.task(Promise.resolve());
+		task(Promise.resolve());
 	};
 
-	expect(() => g.runInAction(f)).toThrowErrorMatchingInlineSnapshot(
+	expect(() => runInAction(f)).toThrowErrorMatchingInlineSnapshot(
 		`"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :undefined"`
 	);
 });

@@ -1,4 +1,4 @@
-import { observable, effect, signal } from "../src/main";
+import { effect, signal } from "../src/main";
 
 test("runs the callback initially", () => {
 	let count = 0;

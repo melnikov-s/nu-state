@@ -6,7 +6,6 @@ import {
 	effect,
 	computed,
 	listener,
-	graph,
 	untracked,
 	atom,
 	isObserved,
@@ -23,23 +22,6 @@ test("can't listen to untracked changes", () => {
 	const [get2, set2] = signal(1);
 	expect(count).toBe(0);
 	l.track(() => get() + untracked(() => get2()));
-	set(1);
-	expect(count).toBe(1);
-	set2(2);
-	expect(count).toBe(1);
-	set(3);
-	expect(count).toBe(2);
-});
-
-test("can't listen to untracked changes (non default graph)", () => {
-	const g = graph();
-	const opts = { graph: g };
-	let count = 0;
-	const l = listener(() => count++, opts);
-	const [get, set] = signal(0, opts);
-	const [get2, set2] = signal(1, opts);
-	expect(count).toBe(0);
-	l.track(() => get() + g.untracked(() => get2()));
 	set(1);
 	expect(count).toBe(1);
 	set2(2);
@@ -83,60 +65,6 @@ test("can query the observed state of an observable", () => {
 	expect(isObserved(n)).toBe(false);
 });
 
-test("can isolate observable state to a new graph", () => {
-	const g = graph();
-	const o = observable({ value: 0 }, { graph: g });
-	const c = computed(() => o.value, { graph: g });
-	const a = atom({ graph: g });
-
-	let count = 0;
-
-	const u = effect(() => {
-		c();
-		a.reportObserved();
-		count++;
-	});
-
-	expect(count).toBe(1);
-	o.value = 1;
-	a.reportChanged();
-	expect(count).toBe(1);
-	u();
-
-	effect(
-		() => {
-			c();
-			a.reportObserved();
-			expect(g.isTracking()).toBe(true);
-			count++;
-		},
-		{ graph: g }
-	);
-
-	o.value = 1;
-	expect(count).toBe(2);
-	a.reportChanged();
-	expect(count).toBe(3);
-	expect(isObserved(o)).toBe(false);
-	expect(isObserved(o, { graph: g })).toBe(true);
-});
-
-test("can isolate actions to a new graph", () => {
-	const g = graph();
-
-	g.runInAction(() => {
-		expect(g.isInAction()).toBe(true);
-	});
-
-	g.runInAction(() => {
-		expect(isInAction()).toBe(false);
-	});
-
-	runInAction(() => {
-		expect(g.isInAction()).toBe(false);
-	});
-});
-
 test("can query the tracking state of the graph", () => {
 	let count = 0;
 
@@ -165,15 +93,13 @@ test("can query the tracking state of the graph", () => {
 });
 
 test("will prevent modification of observables outside of actions when actions are enforced", () => {
-	const g = graph();
-
-	const [get, set] = signal(0, { graph: g });
-	g.enforceActions(true);
+	const [get, set] = signal(0);
+	enforceActions(true);
 
 	//allowed
 	expect(() => set(1)).not.toThrow();
 
-	const u = effect(() => get(), { graph: g });
+	const u = effect(() => get());
 	expect(() => set(2)).toThrowError();
 
 	u();

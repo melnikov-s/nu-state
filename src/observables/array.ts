@@ -1,4 +1,4 @@
-import { Graph } from "../core/graph";
+import { batch } from "../core/graph";
 import { getAdministration, getObservable, getSource } from "./utils/lookup";
 import { Administration } from "./utils/Administration";
 import { AtomMap } from "./utils/AtomMap";
@@ -8,12 +8,12 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 	valuesMap: AtomMap<number>;
 	keysAtom: AtomNode;
 
-	constructor(source: T[] = [], graph: Graph) {
-		super(source, graph);
+	constructor(source: T[] = []) {
+		super(source);
 		this.proxyTraps.get = (_, name) => this.proxyGet(name);
 		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
-		this.valuesMap = new AtomMap(graph);
-		this.keysAtom = new AtomNode(graph);
+		this.valuesMap = new AtomMap();
+		this.keysAtom = new AtomNode();
 	}
 
 	private proxyGet(name: PropertyKey): unknown {
@@ -62,7 +62,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		this.atom.reportObserved();
 		this.valuesMap.reportObserved(index);
 
-		return getObservable(this.source[index], this.graph);
+		return getObservable(this.source[index]);
 	}
 
 	set(index: number, newValue: T): void {
@@ -151,7 +151,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 	}
 
 	onArrayChanged(lengthChanged = false, index?: number, count?: number): void {
-		this.graph.batch(() => {
+		batch(() => {
 			if (lengthChanged) {
 				this.keysAtom.reportChanged();
 			}
@@ -238,9 +238,7 @@ const arrayMethods: any = {
 		adm.onArrayChanged();
 
 		adm.source.sort(
-			compareFn &&
-				((a, b) =>
-					compareFn(getObservable(a, adm.graph), getObservable(b, adm.graph)))
+			compareFn && ((a, b) => compareFn(getObservable(a), getObservable(b)))
 		);
 
 		return this;
@@ -275,10 +273,7 @@ const arrayMethods: any = {
 			const adm = getAdministration(this);
 			adm.reportObserved(false);
 
-			return getObservable(
-				adm.source[method].apply(adm.source, arguments),
-				adm.graph
-			);
+			return getObservable(adm.source[method].apply(adm.source, arguments));
 		};
 	}
 });
@@ -298,7 +293,7 @@ const arrayMethods: any = {
 					return callback.call(
 						thisArg,
 						element && typeof element === "object"
-							? getObservable(element, adm.graph)
+							? getObservable(element)
 							: element,
 						index,
 						this
@@ -324,13 +319,12 @@ const arrayMethods: any = {
 					return callback.call(
 						thisArg,
 						element && typeof element === "object"
-							? getObservable(element, adm.graph)
+							? getObservable(element)
 							: element,
 						index,
 						this
 					);
-				}),
-				adm.graph
+				})
 			);
 		};
 	}
@@ -348,12 +342,7 @@ const arrayMethods: any = {
 				currentValue: unknown,
 				index: number
 			) => {
-				return callback(
-					accumulator,
-					getObservable(currentValue, adm.graph),
-					index,
-					this
-				);
+				return callback(accumulator, getObservable(currentValue), index, this);
 			};
 			return adm.source[method].apply(adm.source, arguments);
 		};

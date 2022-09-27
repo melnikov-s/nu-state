@@ -1,10 +1,12 @@
 import {
-	Graph,
-	Computed,
-	ObservableNode,
-	ObserverNode,
-	nodeTypes,
+	isPotentiallyStale,
+	reportObserved,
+	runObserver,
+	isObserved,
+	remove,
 } from "../graph";
+
+import { Computed, ObservableNode, nodeTypes, ObserverNode } from "../types";
 import { defaultEquals } from "../../utils";
 
 export class ComputedNode<T> implements Computed<T> {
@@ -16,7 +18,6 @@ export class ComputedNode<T> implements Computed<T> {
 	value: T | null = null;
 
 	constructor(
-		readonly graph: Graph,
 		private readonly derive: () => T,
 		private readonly comparator: (a: T, b: T) => boolean = defaultEquals,
 		private keepAlive: boolean = false,
@@ -41,7 +42,7 @@ export class ComputedNode<T> implements Computed<T> {
 	// or if it's marked as potentially stale by the graph. A computed becomes potentially
 	// stale when one of its dependents has changed.
 	isDirty(): boolean {
-		return this.dirty || this.graph.isPotentiallyStale(this);
+		return this.dirty || isPotentiallyStale(this);
 	}
 
 	isKeepAlive(): boolean {
@@ -53,7 +54,7 @@ export class ComputedNode<T> implements Computed<T> {
 			throw new Error("cycle detected in computed method");
 		}
 
-		this.graph.reportObserved(this);
+		reportObserved(this);
 
 		if (this.isDirty()) {
 			let value;
@@ -62,11 +63,7 @@ export class ComputedNode<T> implements Computed<T> {
 			this.dirty = false;
 
 			try {
-				this.value = value = this.graph.runObserver(
-					this,
-					this.derive,
-					this.context
-				);
+				this.value = value = runObserver(this, this.derive, this.context);
 			} catch (e) {
 				this.dirty = true;
 				throw e;
@@ -83,8 +80,8 @@ export class ComputedNode<T> implements Computed<T> {
 	setKeepAlive(keepAlive: boolean): void {
 		const wasKeepAlive = this.keepAlive;
 		this.keepAlive = keepAlive;
-		if (wasKeepAlive && !keepAlive && !this.graph.isObserved(this)) {
-			this.graph.remove(this);
+		if (wasKeepAlive && !keepAlive && !isObserved(this)) {
+			remove(this);
 		}
 	}
 }

@@ -7,13 +7,11 @@ import {
 } from "./api/computed";
 import { listener, Listener } from "./api/listener";
 import { atom, Atom } from "./api/atom";
-import { observable, ObservableOptions } from "./api/observable";
+import { observable } from "./api/observable";
 import { reaction } from "./api/reaction";
 import { action } from "./api/action";
 import { signal, Signal, SignalOptions } from "./api/signal";
 import {
-	makeGraph as graph,
-	Graph,
 	enforceActions,
 	isInAction,
 	isInBatch,
@@ -22,14 +20,14 @@ import {
 	runInAction,
 	isObserved,
 	untracked,
-	getDefaultGraph,
 	onObservedStateChange,
 	onReactionsComplete,
 	task,
 	reportObserved,
 	reportChanged,
+	source,
+	isObservable,
 } from "./api/graph";
-import { getSource, isObservable } from "./observables/utils/lookup";
 import {
 	Scheduler,
 	createScheduler,
@@ -52,10 +50,8 @@ export {
 	enforceActions,
 	reportChanged,
 	reportObserved,
-	getDefaultGraph,
 	getInternalComputedNode,
-	getSource as source,
-	graph,
+	source,
 	isInAction,
 	isInBatch,
 	isObservable,
@@ -77,10 +73,8 @@ export type {
 	Atom,
 	Computed,
 	ComputedOptions,
-	Graph,
 	Listener,
 	Signal,
 	SignalOptions,
-	ObservableOptions,
 	Scheduler,
 };

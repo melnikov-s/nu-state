@@ -1,14 +1,8 @@
-import { resolveGraph, Graph } from "./graph";
 import { isNonPrimitive } from "../utils";
 import { getObservable } from "../observables/utils/lookup";
 
-export type ObservableOptions = {
-	graph?: Graph;
-};
-
 export function observable<T extends object>(
-	object: T,
-	opts?: ObservableOptions
+	object: T
 ): T {
 	const primitive = !isNonPrimitive(object);
 	if (primitive) {
@@ -17,5 +11,5 @@ export function observable<T extends object>(
 		);
 	}
 
-	return getObservable(object, resolveGraph(opts?.graph));
+	return getObservable(object);
 }

@@ -1,9 +1,8 @@
 import { Administration, getAdministration } from "./utils/Administration";
-import { Graph } from "../core/graph";
 
 export class DateAdministration extends Administration<Date> {
-	constructor(source: Date, graph: Graph) {
-		super(source, graph);
+	constructor(source: Date) {
+		super(source);
 		this.proxyTraps.get = (_, name: keyof Date) => this.proxyGet(name);
 	}
 

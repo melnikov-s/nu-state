@@ -1,5 +1,4 @@
 import {
-	observable,
 	runInAction,
 	action,
 	effect,
@@ -283,7 +282,7 @@ test("computed can throw within an action", () => {
 		try {
 			set(0);
 			c();
-		} catch (e) {}
+		} catch (e) { }
 		expect(() => c()).toThrowError();
 		set(10);
 	});

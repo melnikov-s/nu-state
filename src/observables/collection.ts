@@ -1,4 +1,4 @@
-import { Graph } from "../core/graph";
+import { batch, isTracking } from "../core/graph";
 import { AtomNode } from "../core/nodes/atom";
 import { getObservable, getSource, getAdministration } from "./utils/lookup";
 import {
@@ -16,11 +16,11 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	hasMap: AtomMap<K>;
 	keysAtom: AtomNode;
 
-	constructor(source: Collection<K, V>, graph: Graph) {
-		super(source, graph);
-		this.hasMap = new AtomMap(graph, true);
-		this.valuesMap = new AtomMap(graph);
-		this.keysAtom = new AtomNode(graph);
+	constructor(source: Collection<K, V>) {
+		super(source);
+		this.hasMap = new AtomMap(true);
+		this.valuesMap = new AtomMap();
+		this.keysAtom = new AtomNode();
 		this.isMap =
 			typeof (source as Map<K, V>).set === "function" &&
 			typeof (source as Map<K, V>).get === "function";
@@ -45,12 +45,12 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	private hasEntry(key: K): boolean {
 		return !!(
 			this.source.has(getSource(key)) ||
-			(hasObservable(key) && this.source.has(getObservable(key, this.graph)))
+			(hasObservable(key) && this.source.has(getObservable(key)))
 		);
 	}
 
 	private onCollectionChange(key: K): void {
-		this.graph.batch(() => {
+		batch(() => {
 			this.keysAtom.reportChanged();
 			this.hasMap.reportChanged(key);
 			this.flushChange();
@@ -66,7 +66,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	}
 
 	clear(): void {
-		this.graph.batch(() => {
+		batch(() => {
 			this.source.forEach((_, key) => this.delete(key));
 		});
 	}
@@ -78,7 +78,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		this.keysAtom.reportObserved();
 		this.atom.reportObserved();
 		this.source.forEach((value, key) => {
-			const observed = getObservable(this.isMap ? key : value, this.graph);
+			const observed = getObservable(this.isMap ? key : value);
 			callbackFn.call(
 				thisArg,
 				(this.isMap ? this.get(key) : observed) as V,
@@ -117,7 +117,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	}
 
 	has(value: K): boolean {
-		if (this.graph.isTracking()) {
+		if (isTracking()) {
 			const target = getSource(value);
 			this.hasMap.reportObserved(target);
 			this.atom.reportObserved();
@@ -151,7 +151,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 		let nextIndex = 0;
 		const observableKeys = Array.from(this.source.keys()).map((o) =>
-			getObservable(o, this.graph)
+			getObservable(o)
 		);
 		return {
 			[Symbol.iterator]: function (): IterableIterator<K> {
@@ -176,10 +176,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 		if (has) {
 			this.valuesMap!.reportObserved(key);
-			return getObservable(
-				sourceMap.get(targetKey) ?? sourceMap.get(key),
-				this.graph
-			);
+			return getObservable(sourceMap.get(targetKey) ?? sourceMap.get(key));
 		}
 
 		return undefined;
@@ -197,10 +194,9 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		if (
 			!hasKey ||
 			(oldValue !== targetValue &&
-				(!hasObservable(value) ||
-					oldValue !== getObservable(value, this.graph)))
+				(!hasObservable(value) || oldValue !== getObservable(value)))
 		) {
-			this.graph.batch(() => {
+			batch(() => {
 				this.flushChange();
 				if (sourceMap.has(key)) {
 					sourceMap.set(key, targetValue);

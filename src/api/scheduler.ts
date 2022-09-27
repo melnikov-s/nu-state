@@ -1,7 +1,7 @@
 import { listener as makeListener, Listener } from "./listener";
-import { Graph, resolveGraph } from "./graph";
 import { reaction } from "./reaction";
 import { effect } from "./effect";
+import { onReactionsComplete, batch } from "../core/graph";
 
 export type Scheduler = {
 	listener: (callback: () => void) => Listener;
@@ -14,10 +14,8 @@ export type Scheduler = {
 
 function schedule(
 	scheduler: (reactions: ScheduledReactions) => void,
-	opts?: { graph?: Graph }
 ): Scheduler {
-	const graph = resolveGraph(opts?.graph);
-	const reactions = new ScheduledReactions(graph);
+	const reactions = new ScheduledReactions();
 	let unsub: () => void;
 
 	let isReacting = false;
@@ -35,7 +33,7 @@ function schedule(
 			ran = true;
 
 			if (reactions.size === 0) {
-				unsub = graph!.onReactionsComplete(() => {
+				unsub = onReactionsComplete(() => {
 					if (reactions.size > 0 && !isReacting) {
 						try {
 							// if a reaction causes further transactions we ignore those
@@ -58,13 +56,13 @@ function schedule(
 
 	return {
 		listener(callback: () => void) {
-			return makeListener(applySchedule(callback), { graph });
+			return makeListener(applySchedule(callback));
 		},
 		reaction<T>(track: () => T, callback: (a: T, listener: Listener) => void) {
-			return reaction(track, applySchedule(callback), { graph });
+			return reaction(track, applySchedule(callback));
 		},
 		effect(callback: (t: Listener) => void) {
-			return effect(applySchedule(callback, true), { graph });
+			return effect(applySchedule(callback, true));
 		},
 	};
 }
@@ -73,11 +71,6 @@ class ScheduledReactions {
 	private reactions: Set<Function> = new Set();
 	private argsMap: WeakMap<Function, unknown[]> = new WeakMap();
 	private listenerMap: WeakMap<Function, Listener> = new WeakMap();
-	private graph: Graph;
-
-	constructor(graph?: Graph) {
-		this.graph = resolveGraph(graph);
-	}
 
 	get size(): number {
 		return this.reactions.size;
@@ -98,7 +91,7 @@ class ScheduledReactions {
 	}
 
 	flush(): void {
-		this.graph.batch(() => {
+		batch(() => {
 			try {
 				this.reactions.forEach((reaction) => {
 					const args = this.argsMap.get(reaction) ?? [];
@@ -117,12 +110,9 @@ class ScheduledReactions {
 }
 
 export function createScheduler(
-	scheduler: (fn: () => void) => void,
-	opts?: {
-		graph?: Graph;
-	}
+	scheduler: (fn: () => void) => void
 ): Scheduler {
-	const reactions = new ScheduledReactions(opts?.graph);
+	const reactions = new ScheduledReactions();
 
 	return schedule((newReactions: ScheduledReactions) => {
 		if (reactions.size === 0) {
@@ -133,13 +123,13 @@ export function createScheduler(
 		} else {
 			reactions.merge(newReactions);
 		}
-	}, opts);
+	});
 }
 
-export function createMicroTaskScheduler(opts?: { graph?: Graph }): Scheduler {
-	return createScheduler(queueMicrotask, opts);
+export function createMicroTaskScheduler(): Scheduler {
+	return createScheduler(queueMicrotask);
 }
 
-export function createAnimationScheduler(opts?: { graph?: Graph }): Scheduler {
-	return createScheduler(requestAnimationFrame, opts);
+export function createAnimationScheduler(): Scheduler {
+	return createScheduler(requestAnimationFrame);
 }

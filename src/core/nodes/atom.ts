@@ -1,24 +1,22 @@
-import { Graph, Atom, ObserverNode, nodeTypes } from "../graph";
+import { isObserved, reportChanged, reportObserved } from "../graph";
+import { Atom, ObserverNode, nodeTypes } from "../types";
 
 export class AtomNode<T = unknown> implements Atom<T> {
 	readonly nodeType = nodeTypes.atom;
 	readonly observers: Set<ObserverNode> = new Set();
 
-	constructor(
-		readonly graph: Graph,
-		private readonly comparator?: (a: T) => boolean
-	) {}
+	constructor(private readonly comparator?: (a: T) => boolean) {}
 
 	reportChanged(value?: T): void {
-		if (this.graph.isObserved(this)) {
-			this.graph.reportChanged(this, value);
+		if (isObserved(this)) {
+			reportChanged(this, value);
 		}
 	}
 
 	reportObserved(): boolean {
-		this.graph.reportObserved(this);
+		reportObserved(this);
 
-		return this.graph.isObserved(this);
+		return isObserved(this);
 	}
 
 	equals(value: T): boolean {

@@ -1,4 +1,4 @@
-import { Graph } from "../../core/graph";
+import { batch, onObservedStateChange } from "../../core/graph";
 import { AtomNode } from "../../core/nodes/atom";
 import { AtomMap } from "./AtomMap";
 
@@ -13,7 +13,6 @@ let circularRefSet: WeakSet<object> | null = null;
 export class Administration<T extends object = object> {
 	readonly proxy: T;
 	readonly source: T;
-	readonly graph: Graph;
 	readonly atom: AtomNode;
 	readonly proxyTraps: ProxyHandler<T> = {
 		preventExtensions(): boolean {
@@ -24,18 +23,17 @@ export class Administration<T extends object = object> {
 	protected valuesMap?: AtomMap<unknown>;
 	private forceObservedAtoms?: AtomNode[];
 
-	constructor(source: T, graph: Graph) {
-		this.atom = new AtomNode(graph);
+	constructor(source: T) {
+		this.atom = new AtomNode();
 		this.source = source;
 		this.proxy = new Proxy(this.source, this.proxyTraps) as T;
-		this.graph = graph;
 		administrationMap.set(this.proxy, this);
 		administrationMap.set(this.source, this);
 	}
 
 	protected flushChange(): void {
 		if (this.forceObservedAtoms?.length) {
-			this.graph.batch(() => {
+			batch(() => {
 				for (let i = 0; i < this.forceObservedAtoms!.length; i++) {
 					this.forceObservedAtoms![i].reportChanged();
 				}
@@ -60,7 +58,7 @@ export class Administration<T extends object = object> {
 
 		circularRefSet!.add(this);
 
-		const atom = new AtomNode(this.graph);
+		const atom = new AtomNode();
 		if (!this.forceObservedAtoms) {
 			this.forceObservedAtoms = [];
 		}
@@ -90,6 +88,6 @@ export class Administration<T extends object = object> {
 
 			atom = this.valuesMap.getOrCreate(key);
 		}
-		return this.graph.onObservedStateChange(atom, callback);
+		return onObservedStateChange(atom, callback);
 	}
 }

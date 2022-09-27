@@ -1,22 +1,16 @@
-import { Graph } from "../core/graph";
 import { defaultEquals } from "../utils";
 import { AtomNode } from "../core/nodes/atom";
+import { isObserved } from "../core/graph";
 
 export class Signal<T> {
 	value: T;
-	graph: Graph;
 	atom: AtomNode<T>;
 	comparator: typeof defaultEquals;
 
-	constructor(
-		value: T,
-		graph: Graph,
-		comparator: typeof defaultEquals = defaultEquals
-	) {
+	constructor(value: T, comparator: typeof defaultEquals = defaultEquals) {
 		this.value = value;
-		this.graph = graph;
 		this.comparator = comparator;
-		this.atom = new AtomNode(graph, this.equals.bind(this));
+		this.atom = new AtomNode(this.equals.bind(this));
 	}
 
 	equals(value: T): boolean {
@@ -32,7 +26,7 @@ export class Signal<T> {
 	set(newValue: T): T {
 		if (this.value !== newValue) {
 			// if no one is observing us and we can perform the write silently
-			if (!this.graph.isObserved(this.atom)) {
+			if (!isObserved(this.atom)) {
 				this.value = newValue;
 			} else {
 				const oldValue = this.value;

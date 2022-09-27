@@ -1,6 +1,5 @@
 import { vi } from "vitest";
 import {
-	observable,
 	createScheduler,
 	Scheduler,
 	isInBatch,

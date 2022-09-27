@@ -1,5 +1,10 @@
 import { AtomNode } from "../core/nodes/atom";
-import { Graph } from "../core/graph";
+import {
+	batch,
+	onObservedStateChange,
+	isTracking,
+	runInAction,
+} from "../core/graph";
 import { getObservable, getSource, getAction } from "./utils/lookup";
 import {
 	isPropertyKey,
@@ -18,11 +23,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
 	types: Map<PropertyKey, PropertyType>;
 
-	constructor(source: T = {} as T, graph: Graph) {
-		super(source, graph);
-		this.keysAtom = new AtomNode(graph);
-		this.hasMap = new AtomMap(graph, true);
-		this.valuesMap = new AtomMap(graph);
+	constructor(source: T = {} as T) {
+		super(source);
+		this.keysAtom = new AtomNode();
+		this.hasMap = new AtomMap(true);
+		this.valuesMap = new AtomMap();
 		this.types = new Map();
 
 		if (typeof source === "function") {
@@ -46,16 +51,14 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	): T extends new (args: unknown[]) => unknown ? InstanceType<T> : never {
 		const instance = Reflect.construct(this.source as Function, args);
 
-		return getObservable(instance, this.graph);
+		return getObservable(instance);
 	}
 
 	private proxyApply(
 		thisArg: unknown,
 		args: unknown[]
 	): T extends (args: unknown[]) => unknown ? ReturnType<T> : never {
-		return this.graph.batch(() =>
-			Reflect.apply(this.source as Function, thisArg, args)
-		);
+		return batch(() => Reflect.apply(this.source as Function, thisArg, args));
 	}
 
 	private proxyHas(name: keyof T): boolean {
@@ -100,7 +103,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private set(key: PropertyKey, value: T[keyof T]): void {
-		this.graph.batch(() => {
+		batch(() => {
 			Reflect.set(this.source, key, value, this.proxy);
 		});
 	}
@@ -114,7 +117,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				throw new Error("computed values are only supported on getters");
 			}
 			computedNode = new ComputedNode(
-				this.graph,
 				descriptor.get,
 				undefined,
 				false,
@@ -150,7 +152,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		key: keyof T | undefined
 	): () => void {
 		if (key == null) {
-			return this.graph.onObservedStateChange(this.atom, callback);
+			return onObservedStateChange(this.atom, callback);
 		}
 
 		const type = this.getType(key);
@@ -161,11 +163,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			}
 			case "observable": {
 				const atom = this.valuesMap.getOrCreate(key);
-				return this.graph.onObservedStateChange(atom, callback);
+				return onObservedStateChange(atom, callback);
 			}
 			case "computed": {
 				const computed = this.getComputed(key);
-				return this.graph.onObservedStateChange(computed, callback);
+				return onObservedStateChange(computed, callback);
 			}
 		}
 	}
@@ -178,17 +180,17 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			case "action": {
 				if (key in this.source) {
 					this.valuesMap.reportObserved(key);
-				} else if (this.graph.isTracking()) {
+				} else if (isTracking()) {
 					this.hasMap.reportObserved(key);
 				}
 
 				this.atom.reportObserved();
 
 				if (type === "observable") {
-					return getObservable(this.get(key), this.graph);
+					return getObservable(this.get(key));
 				}
 
-				return getAction(this.get(key) as unknown as Function, this.graph);
+				return getAction(this.get(key) as unknown as Function);
 			}
 			case "computed": {
 				const computedNode = this.getComputed(key);
@@ -205,7 +207,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 		// if this property is a setter
 		if (type === "computed") {
-			this.graph.runInAction(() => this.set(key, newValue));
+			runInAction(() => this.set(key, newValue));
 			return;
 		}
 
@@ -216,7 +218,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		if (!had || oldValue !== targetValue) {
 			this.set(key, targetValue);
 
-			this.graph.batch(() => {
+			batch(() => {
 				this.flushChange();
 				if (!had) {
 					this.keysAtom.reportChanged();
@@ -229,7 +231,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	has(key: keyof T): boolean {
-		if (this.graph.isTracking()) {
+		if (isTracking()) {
 			this.hasMap.reportObserved(key);
 			this.atom.reportObserved();
 		}
@@ -241,7 +243,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		if (!(key in this.source)) return;
 
 		delete this.source[key];
-		this.graph.batch(() => {
+		batch(() => {
 			this.flushChange();
 			this.valuesMap.reportChanged(key);
 			this.keysAtom.reportChanged();
