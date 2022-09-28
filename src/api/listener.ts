@@ -6,8 +6,6 @@ export type Listener = {
 	isDisposed: boolean;
 };
 
-export function listener(
-	callback: (listener: Listener) => void,
-): Listener {
+export function listener(callback: (listener: Listener) => void): Listener {
 	return new ListenerNode(callback);
 }

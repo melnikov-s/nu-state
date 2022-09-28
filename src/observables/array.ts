@@ -1,5 +1,11 @@
 import { batch } from "../core/graph";
-import { getAdministration, getObservable, getSource } from "./utils/lookup";
+import {
+	getAdministration,
+	getObservable,
+	getSource,
+	isObservable,
+	throwObservablesOnSource,
+} from "./utils/lookup";
 import { Administration } from "./utils/Administration";
 import { AtomMap } from "./utils/AtomMap";
 import { AtomNode } from "../core/nodes/atom";
@@ -14,6 +20,14 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
 		this.valuesMap = new AtomMap();
 		this.keysAtom = new AtomNode();
+
+		if (process.env.NODE_ENV !== "production") {
+			for (let i = 0; i < this.source.length; i++) {
+				if (isObservable(this.source[i])) {
+					throwObservablesOnSource();
+				}
+			}
+		}
 	}
 
 	private proxyGet(name: PropertyKey): unknown {
@@ -261,8 +275,12 @@ const arrayMethods: any = {
 	if (Array.prototype.hasOwnProperty(method)) {
 		arrayMethods[method] = function (this: unknown[]): unknown {
 			const adm = getAdministration(this);
+			adm.reportObserved(false);
+			const source = getSource(arguments[0]);
+			const sourceArr = getSource(this);
+			const args = arguments.length === 1 ? [source] : [source, arguments[1]];
 
-			return adm.source[method].apply(adm.proxy, arguments);
+			return adm.source[method].apply(sourceArr, args);
 		};
 	}
 });

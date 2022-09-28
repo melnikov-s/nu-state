@@ -150,43 +150,14 @@ test("WeakMap does not report to have Map methods", () => {
 	expect((m as any).forEach).toBe(undefined);
 });
 
-test("map can be initialized with observable values", () => {
-	const o1 = observable({});
-	const o2 = observable({});
-	const o3 = {};
-
-	const m = map(
-		new Map([
-			[o1, o1],
-			[o2, o2],
-			[o3, o3],
-		])
-	);
-	expect(m.has(source(o1))).toBe(true);
-	expect(m.has(source(o2))).toBe(true);
-	expect(m.has(o1)).toBe(true);
-	expect(m.has(o2)).toBe(true);
-	m.set(o2, o2);
-	expect(m.size).toBe(3);
-	expect(m.has(observable(o3))).toBe(true);
-	m.delete(observable(o3));
-	expect(m.size).toBe(2);
-	m.delete(source(o1));
-	expect(m.size).toBe(2);
-	m.delete(o1);
-	expect(m.size).toBe(1);
-	m.delete(o2);
-	expect(m.size).toBe(0);
-});
-
 test("does not trigger a change when same observable is set on map initialized with observable values", () => {
 	const o1 = observable({ prop: 1 });
 	const o2 = observable({ prop: 2 });
 
 	const m = map(
 		new Map([
-			[o1, o1],
-			[o2, o2],
+			[source(o1), source(o1)],
+			[source(o2), source(o2)],
 		])
 	);
 
@@ -202,7 +173,7 @@ test("does not trigger a change when same observable is set on map initialized w
 	m.set(o1, source(o1));
 	expect(count).toBe(1);
 	m.set(o1, o2);
-	expect(count).toBe(2);
+	expect(count).toBe(1);
 });
 
 test("[mobx-test] observe value", function () {
@@ -352,7 +323,7 @@ test("[mobx-test] cleanup", function () {
 test("[mobx-test] unobserve before delete", function () {
 	const propValues = [];
 	const myObservable = observable({
-		myMap: map(),
+		myMap: source(map()),
 	}) as any;
 	myObservable.myMap.set("myId", {
 		myProp: "myPropValue",

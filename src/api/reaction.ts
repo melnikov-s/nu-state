@@ -2,7 +2,7 @@ import { listener as makeListener, Listener } from "./listener";
 
 export function reaction<T>(
 	track: () => T,
-	callback: (a: T, listener: Listener) => void,
+	callback: (a: T, listener: Listener) => void
 ): () => void {
 	let value: T;
 

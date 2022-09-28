@@ -1,10 +1,13 @@
 import { batch, isTracking } from "../core/graph";
 import { AtomNode } from "../core/nodes/atom";
-import { getObservable, getSource, getAdministration } from "./utils/lookup";
 import {
-	Administration,
-	getAdministration as hasObservable,
-} from "./utils/Administration";
+	getObservable,
+	getSource,
+	getAdministration,
+	isObservable,
+	throwObservablesOnSource,
+} from "./utils/lookup";
+import { Administration } from "./utils/Administration";
 import { AtomMap } from "./utils/AtomMap";
 
 type Collection<K, V> = Set<K> | Map<K, V>;
@@ -26,6 +29,17 @@ export class CollectionAdministration<K, V = K> extends Administration<
 			typeof (source as Map<K, V>).get === "function";
 		this.proxyTraps.get = (_, name) =>
 			this.proxyGet(name as keyof Collection<K, V>);
+
+		if (process.env.NODE_ENV !== "production") {
+			this.source.forEach?.((value, key) => {
+				if (isObservable(value)) {
+					throwObservablesOnSource();
+				}
+				if (this.isMap && isObservable(key)) {
+					throwObservablesOnSource();
+				}
+			});
+		}
 	}
 
 	private proxyGet(name: keyof Collection<K, V>): unknown {
@@ -43,10 +57,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	}
 
 	private hasEntry(key: K): boolean {
-		return !!(
-			this.source.has(getSource(key)) ||
-			(hasObservable(key) && this.source.has(getObservable(key)))
-		);
+		return !!this.source.has(getSource(key));
 	}
 
 	private onCollectionChange(key: K): void {
@@ -58,7 +69,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	}
 
 	protected reportObserveDeep(): void {
-		this.source.forEach((value) => {
+		this.source.forEach?.((value) => {
 			if (value) {
 				getAdministration(value)?.reportObserved();
 			}
@@ -191,11 +202,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		const oldValue: V | undefined =
 			sourceMap.get(targetKey) ?? sourceMap.get(key);
 
-		if (
-			!hasKey ||
-			(oldValue !== targetValue &&
-				(!hasObservable(value) || oldValue !== getObservable(value)))
-		) {
+		if (!hasKey || oldValue !== targetValue) {
 			batch(() => {
 				this.flushChange();
 				if (sourceMap.has(key)) {

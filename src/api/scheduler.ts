@@ -13,7 +13,7 @@ export type Scheduler = {
 };
 
 function schedule(
-	scheduler: (reactions: ScheduledReactions) => void,
+	scheduler: (reactions: ScheduledReactions) => void
 ): Scheduler {
 	const reactions = new ScheduledReactions();
 	let unsub: () => void;

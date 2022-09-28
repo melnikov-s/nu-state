@@ -130,39 +130,11 @@ test("instanceof Set", () => {
 	expect(s instanceof Set).toBe(true);
 });
 
-test("set can be initialized with observable values", () => {
-	const o1 = observable({});
-	const o2 = observable({});
-	const o3 = {};
-
-	const s = set(new Set([o1, o2, o3]));
-	expect(s.has(source(o1))).toBe(true);
-	expect(s.has(source(o2))).toBe(true);
-	s.add(o1);
-	expect(s.size).toBe(3);
-	s.add(o2);
-	expect(s.size).toBe(3);
-	expect(s.has(o1)).toBe(true);
-	expect(s.has(o2)).toBe(true);
-	expect(s.has(o3)).toBe(true);
-	expect(s.has(observable(o3))).toBe(true);
-	s.add(observable(o3));
-	expect(s.size).toBe(3);
-	s.delete(observable(o3));
-	expect(s.size).toBe(2);
-	s.delete(source(o1));
-	expect(s.size).toBe(2);
-	s.delete(o1);
-	expect(s.size).toBe(1);
-	s.delete(o2);
-	expect(s.size).toBe(0);
-});
-
 test("does not trigger a change when same observable is set on set initialized with observable values", () => {
 	const o1 = observable({ prop: 1 });
 	const o2 = observable({ prop: 2 });
 
-	const s = set(new Set([o1, o2]));
+	const s = set(new Set([o1, o2].map(source)));
 
 	let count = 0;
 	effect(() => {
