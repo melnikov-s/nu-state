@@ -46,15 +46,30 @@ export function getAction<T extends Function>(fn: T): T {
 	return action as T;
 }
 
-export function getObservable<T>(value: T, observeClass: boolean = false): T {
+export function throwObservablesOnSource(): never {
+	throw new Error(
+		"observables on source objects are not allowed! Be sure to use `source(observable)` to convert to source object before creating a new observable"
+	);
+}
+
+export function getObservable<T>(
+	value: T,
+	observeClass: boolean = false,
+	ensureSource: boolean = true
+): T {
+	if (!value) {
+		return value;
+	}
+
 	const adm = getAdm(value);
 
 	if (adm) {
+		if (process.env.NODE_ENV !== "production") {
+			if (ensureSource && adm.proxy === value) {
+				throwObservablesOnSource();
+			}
+		}
 		return adm.proxy as unknown as T;
-	}
-
-	if (!value) {
-		return value;
 	}
 
 	if (

@@ -5,7 +5,13 @@ import {
 	isTracking,
 	runInAction,
 } from "../core/graph";
-import { getObservable, getSource, getAction } from "./utils/lookup";
+import {
+	getObservable,
+	getSource,
+	getAction,
+	throwObservablesOnSource,
+	isObservable,
+} from "./utils/lookup";
 import {
 	isPropertyKey,
 	getPropertyDescriptor,
@@ -44,6 +50,15 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		this.proxyTraps.deleteProperty = (_, name) =>
 			this.proxyDeleteProperty(name as keyof T);
 		this.proxyTraps.ownKeys = () => this.proxyOwnKeys();
+
+		if (process.env.NODE_ENV !== "production") {
+			Object.getOwnPropertyNames(source).forEach((name) => {
+				const type = this.getType(name as keyof T);
+				if (type === "observable" && isObservable(source[name])) {
+					throwObservablesOnSource();
+				}
+			});
+		}
 	}
 
 	private proxyConstruct(

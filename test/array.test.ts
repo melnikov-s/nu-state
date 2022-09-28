@@ -48,13 +48,13 @@ test("sort parameters are observable", () => {
 		const frozen = {};
 		Object.freeze(frozen);
 		const arrA = array([{}, lookup, {}, {}, lookup, frozen]);
-		const arrB = array([{}, observedLookup, frozen]);
+		const arrB = array([{}, lookup, frozen]);
 
 		effect(() => {
 			count++;
-			expect(arrA[method](lookup)).toBe(negativeValue);
+			expect(arrA[method](lookup)).not.toBe(negativeValue);
 			expect(arrA[method](observedLookup)).not.toBe(negativeValue);
-			expect(arrB[method](lookup)).toBe(negativeValue);
+			expect(arrB[method](lookup)).not.toBe(negativeValue);
 			expect(arrB[method](observedLookup)).not.toBe(negativeValue);
 			expect(arrA[method](frozen)).not.toBe(negativeValue);
 			expect(arrB[method](frozen)).not.toBe(negativeValue);

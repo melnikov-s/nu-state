@@ -4,6 +4,7 @@ import {
 	reportObserved,
 	reportChanged,
 	signal,
+	source,
 } from "../src/main";
 
 test("can't observe primitive values", () => {
@@ -157,8 +158,8 @@ test("reportObserved on map (deep)", () => {
 	const refB = observable({ value: 1 });
 	const o = observable(
 		new Map([
-			[1, refA],
-			[2, refB],
+			[1, source(refA)],
+			[2, source(refB)],
 		])
 	);
 	let count = 0;
@@ -180,7 +181,7 @@ test("reportObserved on map (deep)", () => {
 test("reportObserved on set (deep)", () => {
 	const refA = observable({ value: 1 });
 	const refB = observable({ value: 1 });
-	const o = observable(new Set([refA, refB]));
+	const o = observable(new Set([refA, refB].map(source)));
 	let count = 0;
 	effect(() => {
 		reportObserved(o);
@@ -200,7 +201,7 @@ test("reportObserved on set (deep)", () => {
 test("reportObserved on array (deep)", () => {
 	const refA = observable({ value: 1 });
 	const refB = observable({ value: 1 });
-	const o = observable([refA, refB]);
+	const o = observable([refA, refB].map(source));
 	let count = 0;
 	effect(() => {
 		reportObserved(o);

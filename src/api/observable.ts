@@ -1,9 +1,7 @@
 import { isNonPrimitive } from "../utils";
 import { getObservable } from "../observables/utils/lookup";
 
-export function observable<T extends object>(
-	object: T
-): T {
+export function observable<T extends object>(object: T): T {
 	const primitive = !isNonPrimitive(object);
 	if (primitive) {
 		throw new Error(
@@ -11,5 +9,5 @@ export function observable<T extends object>(
 		);
 	}
 
-	return getObservable(object);
+	return getObservable(object, false, false);
 }

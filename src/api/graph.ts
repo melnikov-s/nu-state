@@ -2,7 +2,10 @@ import { getAdministration, isObservable } from "../observables/utils/lookup";
 import { AtomNode } from "../core/nodes/atom";
 import { ComputedNode } from "../core/nodes/computed";
 import { Signal } from "../observables/signal";
-import { onObservedStateChange as coreOnObservedStateChange, isObserved as coreIsObserved } from "../core/graph";
+import {
+	onObservedStateChange as coreOnObservedStateChange,
+	isObserved as coreIsObserved,
+} from "../core/graph";
 
 const nodeMap = new WeakMap();
 
@@ -15,11 +18,10 @@ export {
 	task,
 	untracked,
 	enforceActions,
-	onReactionsComplete
+	onReactionsComplete,
 } from "../core/graph";
 
-export { isObservable, getSource as source } from '../observables/utils/lookup';
-
+export { isObservable, getSource as source } from "../observables/utils/lookup";
 
 export function setNode(value: object, node: object): void {
 	nodeMap.set(value, node);
@@ -29,9 +31,7 @@ export function getNode(value: object): any {
 	return nodeMap.get(value);
 }
 
-export function isObserved(
-	observable: object,
-): boolean {
+export function isObserved(observable: object): boolean {
 	const target = getNode(observable) ?? observable;
 
 	if (target instanceof AtomNode || target instanceof ComputedNode) {
