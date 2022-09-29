@@ -126,7 +126,7 @@ function run<T>(fn: () => T, isUntracked = true, asAction = false): T {
 				taskCalledStack.pop();
 				taskError = true;
 				throw new Error(
-					"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :" +
+					"lobx: when task is used in an action that action must return a promise, instead got :" +
 						typeof result
 				);
 			}
@@ -294,15 +294,7 @@ export function reportObserved(node: ObservableNode): void {
 	}
 }
 
-// run an observer method and listen to any `reportObserved` calls from observables
-// that were accessed during this time
-export function runObserver<T>(
-	node: ObserverNode,
-	observerMethod: () => T,
-	context: unknown = null
-): T {
-	let value: T;
-
+export function startObserver(node: ObserverNode): void {
 	// Clear out all observer links from last run
 	node.observing.forEach((n) => {
 		n.observers.delete(node);
@@ -315,6 +307,64 @@ export function runObserver<T>(
 	});
 	node.observing.clear();
 	runStack.push(node);
+}
+
+export function endObserver(node: ObserverNode): void {
+	if (runStack.length === 0) {
+		throw new Error(
+			"Attempted to end an observer but one has not yet been started."
+		);
+	} else if (
+		runStack[runStack.length - 1] &&
+		runStack[runStack.length - 1] !== node
+	) {
+		throw new Error(
+			"Attempted to end an observer on a node that has not started it"
+		);
+	}
+	// computed values are cached while an observer is running need to track
+	// them and clear them out when the top most observer is completed
+	if (node.nodeType === nodeTypes.computed) {
+		invokedComputed.add(node);
+	}
+
+	runStack.pop();
+
+	if (runStack.length === 0) {
+		// if we're not in a batch we can clean up any derived computed that are not
+		// observed but were cached for the duration of the derivation.
+		// if we're in an batch, that clean up will be performed after the batch
+		// is completed.
+		if (!inBatch) {
+			clearInvokedComputed();
+		}
+
+		// once done with the runstack we need to go through all nodes
+		// that were marked as potential to be unobserved and if they no
+		// longer have any observers call `onBecomeUnobserved` on them.
+		potentialUnObserved.forEach((observable) => {
+			if (observable.observers.size === 0) {
+				if (observable.nodeType === nodeTypes.computed) {
+					remove(observable);
+				} else {
+					notifyObservedState(observable, false);
+				}
+			}
+		});
+		potentialUnObserved.clear();
+	}
+}
+
+// run an observer method and listen to any `reportObserved` calls from observables
+// that were accessed during this time
+export function runObserver<T>(
+	node: ObserverNode,
+	observerMethod: () => T,
+	context: unknown = null
+): T {
+	startObserver(node);
+
+	let value: T;
 
 	try {
 		value = observerMethod.call(context);
@@ -322,37 +372,7 @@ export function runObserver<T>(
 			potentialStale.delete(node);
 		}
 	} finally {
-		// computed values are cached while an observer is running need to track
-		// them and clear them out when the top most observer is completed
-		if (node.nodeType === nodeTypes.computed) {
-			invokedComputed.add(node);
-		}
-
-		runStack.pop();
-
-		if (runStack.length === 0) {
-			// if we're not in a batch we can clean up any derived computed that are not
-			// observed but were cached for the duration of the derivation.
-			// if we're in an batch, that clean up will be performed after the batch
-			// is completed.
-			if (!inBatch) {
-				clearInvokedComputed();
-			}
-
-			// once done with the runstack we need to go through all nodes
-			// that were marked as potential to be unobserved and if they no
-			// longer have any observers call `onBecomeUnobserved` on them.
-			potentialUnObserved.forEach((observable) => {
-				if (observable.observers.size === 0) {
-					if (observable.nodeType === nodeTypes.computed) {
-						remove(observable);
-					} else {
-						notifyObservedState(observable, false);
-					}
-				}
-			});
-			potentialUnObserved.clear();
-		}
+		endObserver(node);
 	}
 
 	return value;

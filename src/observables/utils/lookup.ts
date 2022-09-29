@@ -1,10 +1,12 @@
+import { runInAction } from "../../core/graph";
 import { CollectionAdministration } from "../collection";
 import { ObjectAdministration } from "../object";
 import { ArrayAdministration } from "../array";
 import { DateAdministration } from "../date";
-import { Administration, getAdministration as getAdm } from "./Administration";
+import { Administration } from "./Administration";
 import { isPlainObject } from "../../utils";
-import { runInAction } from "../../core/graph";
+
+const administrationMap: WeakMap<object, Administration> = new WeakMap();
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -17,13 +19,15 @@ export function getAdministration<T extends object>(
 	: T extends Date
 	? DateAdministration
 	: ObjectAdministration<any> {
-	return getAdm(obj)! as ReturnType<typeof getAdministration>;
+	return administrationMap.get(obj as object)! as ReturnType<
+		typeof getAdministration
+	>;
 }
 
 const actionsMap: WeakMap<Function, Function> = new WeakMap();
 
 export function getSource<T>(obj: T): T {
-	const adm = getAdm(obj);
+	const adm = getAdministration(obj as object);
 
 	return adm ? (adm.source as unknown as T) : obj;
 }
@@ -52,16 +56,17 @@ export function throwObservablesOnSource(): never {
 	);
 }
 
-export function getObservable<T>(
-	value: T,
-	observeClass: boolean = false,
-	ensureSource: boolean = true
-): T {
+export function getObservableClassInstance<T extends object>(value: T): T {
+	const adm = new ObjectAdministration(value);
+	return adm.proxy as unknown as T;
+}
+
+export function getObservable<T>(value: T, ensureSource: boolean = true): T {
 	if (!value) {
 		return value;
 	}
 
-	const adm = getAdm(value);
+	const adm = getAdministration(value);
 
 	if (adm) {
 		if (process.env.NODE_ENV !== "production") {
@@ -88,11 +93,13 @@ export function getObservable<T>(
 			Adm = CollectionAdministration;
 		} else if (obj instanceof Date) {
 			Adm = DateAdministration;
-		} else if (!observeClass && !isPlainObject(value)) {
+		} else if (!isPlainObject(value)) {
 			return value;
 		}
 
 		const adm = new Adm(obj);
+		administrationMap.set(adm.proxy, adm);
+		administrationMap.set(adm.source, adm);
 		return adm.proxy as unknown as T;
 	}
 
@@ -100,6 +107,6 @@ export function getObservable<T>(
 }
 
 export function isObservable(obj: unknown): boolean {
-	const adm = getAdm(obj);
+	const adm = getAdministration(obj as object);
 	return !!(adm && adm.proxy === obj);
 }

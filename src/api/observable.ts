@@ -9,5 +9,5 @@ export function observable<T extends object>(object: T): T {
 		);
 	}
 
-	return getObservable(object, false, false);
+	return getObservable(object, false);
 }
