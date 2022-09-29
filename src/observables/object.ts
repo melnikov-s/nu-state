@@ -5,12 +5,14 @@ import {
 	isTracking,
 	runInAction,
 } from "../core/graph";
+import { ComputedNode } from "../core/nodes/computed";
 import {
 	getObservable,
 	getSource,
 	getAction,
 	throwObservablesOnSource,
 	isObservable,
+	getAdministration,
 } from "./utils/lookup";
 import {
 	isPropertyKey,
@@ -18,9 +20,8 @@ import {
 	PropertyType,
 	getPropertyType,
 } from "../utils";
-import { Administration, getAdministration } from "./utils/Administration";
+import { Administration } from "./utils/Administration";
 import { AtomMap } from "./utils/AtomMap";
-import { ComputedNode } from "../core/nodes/computed";
 
 export class ObjectAdministration<T extends object> extends Administration<T> {
 	keysAtom: AtomNode;
@@ -158,7 +159,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	protected reportObserveDeep(): void {
 		Object.getOwnPropertyNames(this.source).forEach((name) => {
 			const result = this.read(name as keyof T);
-			getAdministration(result)?.reportObserved();
+			getAdministration(result as object)?.reportObserved();
 		});
 	}
 

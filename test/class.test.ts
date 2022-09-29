@@ -10,11 +10,11 @@ afterEach(() => {
 	enforceActions(false);
 });
 
-test("objects created from class are observable", () => {
+test("objects created from class return `false` from `isObservable`", () => {
 	class C extends Observable {}
 
 	const o = new C();
-	expect(isObservable(o)).toBe(true);
+	expect(isObservable(o)).toBe(false);
 });
 
 test("objects create from class have observable properties", () => {
@@ -206,7 +206,6 @@ test("constructor has observable instance", () => {
 		constructor() {
 			super();
 			weakSet.add(this);
-			expect(isObservable(this)).toBe(true);
 		}
 		prop = {};
 		arrowFunc = () => {
@@ -217,5 +216,5 @@ test("constructor has observable instance", () => {
 	const c = new C();
 	c.arrowFunc();
 	expect(weakSet.has(c)).toBe(true);
-	expect.assertions(3);
+	expect.assertions(2);
 });

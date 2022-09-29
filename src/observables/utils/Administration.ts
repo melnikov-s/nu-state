@@ -2,12 +2,6 @@ import { batch, onObservedStateChange } from "../../core/graph";
 import { AtomNode } from "../../core/nodes/atom";
 import { AtomMap } from "./AtomMap";
 
-const administrationMap: WeakMap<object, Administration> = new WeakMap();
-
-export function getAdministration(obj: unknown): Administration | undefined {
-	return administrationMap.get(obj as object);
-}
-
 let circularRefSet: WeakSet<object> | null = null;
 
 export class Administration<T extends object = object> {
@@ -27,8 +21,6 @@ export class Administration<T extends object = object> {
 		this.atom = new AtomNode();
 		this.source = source;
 		this.proxy = new Proxy(this.source, this.proxyTraps) as T;
-		administrationMap.set(this.proxy, this);
-		administrationMap.set(this.source, this);
 	}
 
 	protected flushChange(): void {

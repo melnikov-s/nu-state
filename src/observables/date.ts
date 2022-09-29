@@ -1,4 +1,5 @@
-import { Administration, getAdministration } from "./utils/Administration";
+import { Administration } from "./utils/Administration";
+import { getAdministration } from "./utils/lookup";
 
 export class DateAdministration extends Administration<Date> {
 	constructor(source: Date) {

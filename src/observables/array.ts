@@ -1,3 +1,4 @@
+import { AtomNode } from "../core/nodes/atom";
 import { batch } from "../core/graph";
 import {
 	getAdministration,
@@ -8,7 +9,6 @@ import {
 } from "./utils/lookup";
 import { Administration } from "./utils/Administration";
 import { AtomMap } from "./utils/AtomMap";
-import { AtomNode } from "../core/nodes/atom";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
 	valuesMap: AtomMap<number>;

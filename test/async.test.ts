@@ -71,7 +71,7 @@ test("if task is called within an action it must return a promise", () => {
 	};
 
 	expect(() => runInAction(f)).toThrowErrorMatchingInlineSnapshot(
-		`"lobx: [FATAL] when task is used in an action that action must return a promise, instead got :undefined"`
+		`"lobx: when task is used in an action that action must return a promise, instead got :undefined"`
 	);
 });
 

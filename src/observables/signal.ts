@@ -1,6 +1,6 @@
-import { defaultEquals } from "../utils";
 import { AtomNode } from "../core/nodes/atom";
 import { isObserved } from "../core/graph";
+import { defaultEquals } from "../utils";
 
 export class Signal<T> {
 	value: T;
