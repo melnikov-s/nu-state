@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"rootDir": "../",
+		"target": "es2015",
+		"alwaysStrict": false,
+		"noImplicitReturns": false,
+		"noUnusedLocals": false,
+		"noImplicitAny": false,
+		"noImplicitThis": false,
+		"lib": ["es2015", "DOM"],
+		"strictNullChecks": false,
+		"downlevelIteration": true,
+		"experimentalDecorators": true,
+		"esModuleInterop": true,
+		"moduleResolution": "node"
+	},
+	"include": ["*.ts"],
+	"exclude": ["node_modules"]
+}

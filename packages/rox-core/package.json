@@ -1,0 +1,45 @@
+{
+  "name": "rox-core",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/melnikov-s/rox.git"
+  },
+  "author": "Sergey Melnikov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/melnikov-s/rox/issues"
+  },
+  "homepage": "https://github.com/melnikov-s/rox#readme",
+  "files": [
+    "dist"
+  ],
+  "types": "./dist/index.d.ts",
+  "module": "./dist/rox-core.es.js",
+  "main": "./dist/rox-core.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/rox-core.es.js",
+      "require": "./dist/rox-core.umd.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
+    "eslint": "^8.23.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.3",
+    "vite": "^3.1.0",
+    "vite-plugin-dts": "^1.4.1",
+    "vitest": "^0.23.2"
+  }
+}
