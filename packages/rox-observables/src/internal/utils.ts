@@ -1,3 +1,5 @@
+import { AtomNode, ComputedNode, SignalNode } from "./graph";
+
 export function defaultEquals<T>(a: T, b: T): boolean {
 	return a === b || (a !== a && b !== b);
 }
@@ -59,4 +61,10 @@ export function isPlainObject(value: unknown): value is object {
 	if (value === null || typeof value !== "object") return false;
 	const proto = Object.getPrototypeOf(value);
 	return proto === Object.prototype || proto === null;
+}
+
+export function resolveNode(
+	node: SignalNode<unknown> | AtomNode | ComputedNode<unknown>
+): unknown {
+	return node.node ?? node;
 }

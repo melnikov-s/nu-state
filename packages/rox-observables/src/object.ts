@@ -1,4 +1,4 @@
-import { AtomNode, Graph } from "./internal/graph";
+import { AtomNode, ComputedNode, Graph } from "./internal/graph";
 import {
 	getObservable,
 	getSource,
@@ -12,22 +12,23 @@ import {
 	getPropertyDescriptor,
 	PropertyType,
 	getPropertyType,
+	resolveNode,
 } from "./internal/utils";
 import { Administration } from "./internal/Administration";
-import { AtomMap } from "./internal/AtomMap";
+import { AtomMap, SignalMap } from "./internal/NodeMap";
 
 export class ObjectAdministration<T extends object> extends Administration<T> {
 	keysAtom: AtomNode;
 	hasMap: AtomMap<PropertyKey>;
-	valuesMap: AtomMap<PropertyKey>;
-	computedMap!: Map<PropertyKey, (() => T[keyof T]) | { get(): T[keyof T] }>;
+	valuesMap: SignalMap<PropertyKey>;
+	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
 	types: Map<PropertyKey, PropertyType>;
 
 	constructor(source: T = {} as T, graph: Graph) {
 		super(source, graph);
 		this.keysAtom = graph.createAtom();
 		this.hasMap = new AtomMap(graph, true);
-		this.valuesMap = new AtomMap(graph);
+		this.valuesMap = new SignalMap(graph);
 		this.types = new Map();
 
 		if (typeof source === "function") {
@@ -105,7 +106,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	}
 
 	private proxyOwnKeys(): (string | symbol)[] {
-		this.keysAtom.reportObserved();
+		this.graph.batch(() => {
+			this.keysAtom.reportObserved();
+			this.atom.reportObserved();
+		});
+
 		return Reflect.ownKeys(this.source);
 	}
 
@@ -119,11 +124,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		});
 	}
 
-	private getComputed(key: keyof T):
-		| (() => T[keyof T])
-		| {
-				get(): T[keyof T];
-		  } {
+	private getComputed(key: keyof T): ComputedNode<T[keyof T]> {
 		if (!this.computedMap) this.computedMap = new Map();
 		let computedNode = this.computedMap.get(key);
 		if (!computedNode) {
@@ -142,9 +143,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	private callComputed(key: keyof T): T[keyof T] {
 		const computedNode = this.getComputed(key);
 
-		return typeof computedNode === "function"
-			? computedNode.call(this)
-			: computedNode.get();
+		return computedNode.get();
 	}
 
 	private getType(key: keyof T): PropertyType {
@@ -160,9 +159,25 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 	protected reportObserveDeep(): void {
 		Object.getOwnPropertyNames(this.source).forEach((name) => {
-			const result = this.read(name as keyof T);
-			getAdministration(result as object)?.reportObserved();
+			const value = this.source[name];
+			if (value && typeof value === "object") {
+				getAdministration(getObservable(value, this.graph))?.reportObserved();
+			}
 		});
+	}
+
+	getNode(key?: keyof T): unknown {
+		if (!key) {
+			return this.atom;
+		}
+
+		const type = this.getType(key);
+
+		if (type === "computed") {
+			return resolveNode(this.getComputed(key));
+		}
+
+		return resolveNode(this.valuesMap.getOrCreate(key, this.source[key]));
 	}
 
 	onObservedStateChange(
@@ -170,7 +185,10 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		key: keyof T | undefined
 	): () => void {
 		if (key == null) {
-			return this.graph.onObservedStateChange(this.atom, callback);
+			return this.graph.onObservedStateChange(
+				this.atom.node ?? this.atom,
+				callback
+			);
 		}
 
 		const type = this.getType(key);
@@ -180,12 +198,18 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				throw new Error(`onObservedStatChange not supported on actions`);
 			}
 			case "observable": {
-				const atom = this.valuesMap.getOrCreate(key);
-				return this.graph.onObservedStateChange(atom, callback);
+				const atom = this.valuesMap.getOrCreate(key, this.source[key]);
+				return this.graph.onObservedStateChange(
+					atom.node ?? this.atom,
+					callback
+				);
 			}
 			case "computed": {
 				const computed = this.getComputed(key);
-				return this.graph.onObservedStateChange(computed, callback);
+				return this.graph.onObservedStateChange(
+					computed.node ?? this.atom,
+					callback
+				);
 			}
 		}
 	}
@@ -197,7 +221,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			case "observable":
 			case "action": {
 				if (key in this.source) {
-					this.valuesMap.reportObserved(key);
+					this.valuesMap.reportObserved(key, this.source[key]);
 				} else if (this.graph.isTracking()) {
 					this.hasMap.reportObserved(key);
 				}
@@ -240,8 +264,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 					this.keysAtom.reportChanged();
 					this.hasMap.reportChanged(key);
 				}
-
-				this.valuesMap.reportChanged(key);
+				this.valuesMap.reportChanged(key, newValue);
 			});
 		}
 	}
@@ -261,7 +284,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		delete this.source[key];
 		this.graph.batch(() => {
 			this.flushChange();
-			this.valuesMap.reportChanged(key);
+			this.valuesMap.reportChanged(key, undefined);
 			this.keysAtom.reportChanged();
 			this.hasMap.reportChanged(key);
 

@@ -32,11 +32,11 @@ export const graph = createGraph({
 	onObservedStateChange,
 });
 
-export function observable(obj: any) {
+export function observable<T>(obj: T): T {
 	return getObservable(obj, graph);
 }
 
-export function source(obj: any) {
+export function source<T>(obj: T): T {
 	return getSource(obj);
 }
 

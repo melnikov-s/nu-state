@@ -64,6 +64,15 @@ export function getObservableClassInstance<T extends object>(
 	return adm.proxy as unknown as T;
 }
 
+export function getObservableIfExists<T>(value: T): T | undefined {
+	const adm = getAdministration(value as object);
+	if (adm) {
+		return adm.proxy;
+	}
+
+	return undefined;
+}
+
 export function getObservable<T>(
 	value: T,
 	graph: Graph,
@@ -121,4 +130,16 @@ export function getObservable<T>(
 export function isObservable(obj: unknown): boolean {
 	const adm = getAdministration(obj as object);
 	return !!(adm && adm.proxy === obj);
+}
+
+export function getInternalNode(obj: object, key?: PropertyKey): any {
+	const adm = getAdministration(obj);
+
+	if (!adm) {
+		throw new Error(
+			"`getInternalNode` expected an observable object. Received: " + typeof obj
+		);
+	}
+
+	return adm.getNode(key);
 }

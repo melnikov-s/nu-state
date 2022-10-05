@@ -1,6 +1,18 @@
 export type AtomNode = {
 	reportObserved(): void;
-	reportChanged(): void;
+	reportChanged(val?: unknown): void;
+	node?: unknown;
+};
+
+export type SignalNode<T> = {
+	reportObserved(): void;
+	reportChanged(val: T): void;
+	node?: unknown;
+};
+
+export type ComputedNode<T> = {
+	get(): T;
+	node?: unknown;
 };
 
 export type Graph = {
@@ -12,10 +24,11 @@ export type Graph = {
 		callback: (observing: boolean) => void
 	): () => void;
 	createAtom(): AtomNode;
+	createSignal<T>(initialValue: T): SignalNode<T>;
 	createComputed<T extends (...args: any[]) => any>(
 		fn: T,
 		context: unknown
-	): T | { get(): ReturnType<T> };
+	): ComputedNode<ReturnType<T>>;
 };
 
 const defaultGraph: Partial<Graph> = {
@@ -23,7 +36,12 @@ const defaultGraph: Partial<Graph> = {
 		return fn();
 	},
 	createComputed(fn, context) {
-		return fn.call(context);
+		return {
+			get: () => fn.call(context),
+		};
+	},
+	createSignal<T>(): SignalNode<T> {
+		return this.createAtom!();
 	},
 	runInAction(fn) {
 		return this.batch!(fn);

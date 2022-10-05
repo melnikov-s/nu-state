@@ -7,17 +7,18 @@ import {
 	throwObservablesOnSource,
 } from "./internal/lookup";
 import { Administration } from "./internal/Administration";
-import { AtomMap } from "./internal/AtomMap";
+import { SignalMap } from "./internal/NodeMap";
+import { resolveNode } from "./internal/utils";
 
 export class ArrayAdministration<T> extends Administration<T[]> {
-	valuesMap: AtomMap<number>;
+	valuesMap: SignalMap<number>;
 	keysAtom: AtomNode;
 
 	constructor(source: T[] = [], graph: Graph) {
 		super(source, graph);
 		this.proxyTraps.get = (_, name) => this.proxyGet(name);
 		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
-		this.valuesMap = new AtomMap(this.graph);
+		this.valuesMap = new SignalMap(this.graph);
 		this.keysAtom = graph.createAtom();
 
 		if (process.env.NODE_ENV !== "production") {
@@ -62,18 +63,27 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 		return true;
 	}
+
 	protected reportObserveDeep(): void {
 		for (let i = 0; i < this.source.length; i++) {
-			const result = this.get(i);
-			if (result) {
-				getAdministration(result)?.reportObserved();
+			const value = this.source[i];
+			if (value && typeof value === "object") {
+				getAdministration(getObservable(value, this.graph))?.reportObserved();
 			}
 		}
 	}
 
+	getNode(key?: number): unknown {
+		if (key == null) {
+			return this.atom;
+		}
+
+		return resolveNode(this.valuesMap.getOrCreate(key, this.source[key]));
+	}
+
 	get(index: number): T | undefined {
 		this.atom.reportObserved();
-		this.valuesMap.reportObserved(index);
+		this.valuesMap.reportObserved(index, this.source[index]);
 
 		return getObservable(this.source[index], this.graph);
 	}
@@ -172,7 +182,7 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 				this.atom.reportChanged();
 			} else {
 				for (let i = index; i < index + count!; i++) {
-					this.valuesMap.reportChanged(i);
+					this.valuesMap.reportChanged(i, this.source[i]);
 				}
 			}
 			this.flushChange();
