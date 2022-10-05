@@ -7,7 +7,8 @@ import {
 	throwObservablesOnSource,
 } from "./internal/lookup";
 import { Administration } from "./internal/Administration";
-import { AtomMap } from "./internal/AtomMap";
+import { AtomMap, SignalMap } from "./internal/NodeMap";
+import { resolveNode } from "./internal/utils";
 
 type Collection<K, V> = Set<K> | Map<K, V>;
 
@@ -16,12 +17,13 @@ export class CollectionAdministration<K, V = K> extends Administration<
 > {
 	isMap: boolean;
 	hasMap: AtomMap<K>;
+	valuesMap: SignalMap<K>;
 	keysAtom: AtomNode;
 
 	constructor(source: Collection<K, V>, graph: Graph) {
 		super(source, graph);
 		this.hasMap = new AtomMap(graph, true);
-		this.valuesMap = new AtomMap(graph);
+		this.valuesMap = new SignalMap(graph);
 		this.keysAtom = graph.createAtom();
 		this.isMap =
 			typeof (source as Map<K, V>).set === "function" &&
@@ -69,10 +71,23 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 	protected reportObserveDeep(): void {
 		this.source.forEach?.((value) => {
-			if (value) {
-				getAdministration(value)?.reportObserved();
+			if (value && typeof value === "object") {
+				getAdministration(getObservable(value, this.graph))?.reportObserved();
 			}
 		});
+	}
+
+	getNode(key?: K): unknown {
+		if (key == null) {
+			return resolveNode(this.atom);
+		}
+
+		return resolveNode(
+			this.valuesMap.getOrCreate(
+				key,
+				this.isMap ? (this.source as Map<K, V>).get(key) : key
+			)
+		);
 	}
 
 	clear(): void {
@@ -183,13 +198,11 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		const sourceMap = this.source as Map<K, V>;
 
 		const has = this.has(key);
+		const value = sourceMap.get(targetKey) ?? sourceMap.get(key);
 
 		if (has) {
-			this.valuesMap!.reportObserved(key);
-			return getObservable(
-				sourceMap.get(targetKey) ?? sourceMap.get(key),
-				this.graph
-			);
+			this.valuesMap!.reportObserved(key, value);
+			return getObservable(value, this.graph);
 		}
 
 		return undefined;
@@ -212,7 +225,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 				} else {
 					sourceMap.set(targetKey, targetValue);
 				}
-				this.valuesMap!.reportChanged(key);
+				this.valuesMap!.reportChanged(key, value);
 				if (!hasKey) {
 					this.hasMap.reportChanged(targetKey);
 					this.keysAtom.reportChanged();

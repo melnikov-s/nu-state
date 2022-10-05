@@ -6,5 +6,6 @@ export {
 	isObservable,
 	getObservable,
 	getObservableClassInstance,
+	getInternalNode,
 } from "./internal/lookup";
 export { extendObservableProxy } from "./internal/extendObservableProxy";

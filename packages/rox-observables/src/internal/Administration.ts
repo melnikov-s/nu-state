@@ -1,5 +1,6 @@
 import { AtomNode, Graph } from "./graph";
-import { AtomMap } from "./AtomMap";
+import { SignalMap } from "./NodeMap";
+import { resolveNode } from "./utils";
 
 let circularRefSet: WeakSet<object> | null = null;
 
@@ -14,7 +15,7 @@ export class Administration<T extends object = object> {
 			return false;
 		},
 	};
-	protected valuesMap?: AtomMap<unknown>;
+	protected valuesMap?: SignalMap;
 	private forceObservedAtoms?: AtomNode[];
 
 	constructor(source: T, graph: Graph) {
@@ -35,6 +36,10 @@ export class Administration<T extends object = object> {
 		}
 	}
 
+	getNode(): unknown {
+		return resolveNode(this.atom);
+	}
+
 	reportChanged(): void {
 		this.atom.reportChanged();
 	}
@@ -42,6 +47,10 @@ export class Administration<T extends object = object> {
 	protected reportObserveDeep(): void {}
 
 	reportObserved(deep = true): void {
+		if (!this.graph.isTracking()) {
+			return;
+		}
+
 		const entry = circularRefSet == null;
 		if (entry) {
 			circularRefSet = new WeakSet();
@@ -81,6 +90,6 @@ export class Administration<T extends object = object> {
 
 			atom = this.valuesMap.getOrCreate(key);
 		}
-		return this.graph.onObservedStateChange(atom, callback);
+		return this.graph.onObservedStateChange(atom.node ?? atom, callback);
 	}
 }
