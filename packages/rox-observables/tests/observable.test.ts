@@ -4,9 +4,18 @@ import {
 	source,
 	reportObserved,
 	reportChanged,
+	graph,
 } from "./utils";
 
-import { getInternalNode } from "../src";
+import {
+	getInternalNode,
+	getObservable,
+	getObservableClassInstance,
+	ObjectAdministration,
+	CollectionAdministration,
+	ArrayAdministration,
+	setAdministrationType,
+} from "../src";
 
 test("reportObserved returns observable", () => {
 	const o = observable({});
@@ -374,4 +383,121 @@ test("get index node from observable collection", () => {
 	node = getInternalNode(o, 0);
 	node.reportChanged();
 	expect(count).toBe(2);
+});
+
+test("can set a custom administration for object", () => {
+	let count = 0;
+	class CustomObjectAdministration<
+		T extends object
+	> extends ObjectAdministration<T> {
+		static proxyTraps: ProxyHandler<object> = {
+			...ObjectAdministration.proxyTraps,
+			get(...args) {
+				count++;
+				return ObjectAdministration.proxyTraps.get(...args);
+			},
+		};
+	}
+
+	const newGraph = { ...graph };
+
+	setAdministrationType({ object: CustomObjectAdministration }, newGraph);
+
+	const oA = getObservable({ value: 0 }, graph);
+	oA.value;
+	expect(count).toBe(0);
+	const oB = getObservable({ value: { value: 0 } }, newGraph);
+	const inner = oB.value;
+	expect(count).toBe(1);
+	inner.value;
+	expect(count).toBe(2);
+});
+
+test("can set a custom administration for class", () => {
+	let ran = false;
+	class CustomObjectAdministration<
+		T extends object
+	> extends ObjectAdministration<T> {
+		static proxyTraps: ProxyHandler<object> = {
+			...ObjectAdministration.proxyTraps,
+			get(...args) {
+				ran = true;
+				return ObjectAdministration.proxyTraps.get(...args);
+			},
+		};
+	}
+
+	const newGraph = { ...graph };
+	setAdministrationType({ object: CustomObjectAdministration }, newGraph);
+
+	class Observable {
+		value = 0;
+
+		constructor() {
+			return getObservableClassInstance(this, newGraph);
+		}
+	}
+
+	const o = new Observable();
+	o.value;
+	expect(ran).toBe(true);
+});
+
+test("can set a custom administration for array", () => {
+	let ran = false;
+	class CustomArrayAdministration<T> extends ArrayAdministration<T> {
+		static proxyTraps: ProxyHandler<Array<any>> = {
+			...ObjectAdministration.proxyTraps,
+			get(...args) {
+				ran = true;
+				return ArrayAdministration.proxyTraps.get(...args);
+			},
+		};
+	}
+
+	const newGraph = { ...graph };
+
+	setAdministrationType({ array: CustomArrayAdministration }, newGraph);
+
+	const oA = getObservable([0], graph);
+	oA[0];
+	expect(ran).toBe(false);
+	const oB = getObservable([0], newGraph);
+	oB[0];
+	expect(ran).toBe(true);
+});
+
+test("can set a custom administration for collection", () => {
+	let ran = false;
+	class CustomCollectionAdministration extends CollectionAdministration<any> {
+		static proxyTraps: ProxyHandler<Map<any, any>> = {
+			...ObjectAdministration.proxyTraps,
+			get(...args) {
+				ran = true;
+				return CollectionAdministration.proxyTraps.get(...args);
+			},
+		};
+	}
+
+	const newGraph = { ...graph };
+
+	setAdministrationType(
+		{ collection: CustomCollectionAdministration },
+		newGraph
+	);
+
+	const oA = getObservable(new Map(), graph);
+	oA.has(0);
+	expect(ran).toBe(false);
+	const oB = getObservable(new Map(), newGraph);
+	oB.has(0);
+	expect(ran).toBe(true);
+});
+
+test("prevent setting administration types multiple times on the same graph", () => {
+	const newGraph = { ...graph };
+	setAdministrationType({}, newGraph);
+	expect(() => setAdministrationType({}, newGraph)).toThrowError(
+		"Administration type already set for this graph"
+	);
 });

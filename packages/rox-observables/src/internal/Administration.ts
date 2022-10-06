@@ -5,16 +5,12 @@ import { resolveNode } from "./utils";
 let circularRefSet: WeakSet<object> | null = null;
 
 export class Administration<T extends object = object> {
+	static readonly proxyTraps: ProxyHandler<object> = {};
 	readonly proxy: T;
 	readonly source: T;
 	readonly atom: AtomNode;
 	readonly graph: Graph;
-	readonly proxyTraps: ProxyHandler<T> = {
-		preventExtensions(): boolean {
-			throw new Error(`observable objects cannot be frozen`);
-			return false;
-		},
-	};
+
 	protected valuesMap?: SignalMap;
 	private forceObservedAtoms?: AtomNode[];
 
@@ -22,7 +18,10 @@ export class Administration<T extends object = object> {
 		this.graph = graph;
 		this.atom = graph.createAtom();
 		this.source = source;
-		this.proxy = new Proxy(this.source, this.proxyTraps) as T;
+		this.proxy = new Proxy(
+			this.source,
+			(this.constructor as typeof Administration).proxyTraps
+		) as T;
 	}
 
 	protected flushChange(): void {
