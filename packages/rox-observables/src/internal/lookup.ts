@@ -6,7 +6,36 @@ import { DateAdministration } from "../date";
 import { Administration } from "./Administration";
 import { isPlainObject } from "./utils";
 
+type AdministrationType = {
+	object: typeof ObjectAdministration;
+	collection: typeof CollectionAdministration;
+	date: typeof DateAdministration;
+	array: typeof ArrayAdministration;
+};
+
 const administrationMap: WeakMap<object, Administration> = new WeakMap();
+const administrationTypeMap: WeakMap<
+	Graph,
+	Partial<AdministrationType>
+> = new WeakMap();
+
+const defaultAdministrationTypes = {
+	object: ObjectAdministration,
+	date: DateAdministration,
+	array: ArrayAdministration,
+	collection: CollectionAdministration,
+};
+
+export function setAdministrationType(
+	admType: Partial<AdministrationType>,
+	graph: Graph
+): void {
+	if (administrationTypeMap.get(graph)) {
+		throw new Error("Administration type already set for this graph");
+	}
+
+	administrationTypeMap.set(graph, admType);
+}
 
 export function getAdministration<T extends object>(
 	obj: T
@@ -60,7 +89,10 @@ export function getObservableClassInstance<T extends object>(
 	value: T,
 	graph: Graph
 ): T {
-	const adm = new ObjectAdministration(value, graph);
+	const ObjectAdm =
+		administrationTypeMap.get(graph)?.object ?? ObjectAdministration;
+	const adm = new ObjectAdm(value, graph);
+	administrationMap.set(adm.source, adm);
 	return adm.proxy as unknown as T;
 }
 
@@ -83,6 +115,7 @@ export function getObservable<T>(
 	}
 
 	const adm = getAdministration(value);
+	const admTypes = administrationTypeMap.get(graph);
 
 	if (adm) {
 		if (adm.graph !== graph) {
@@ -104,16 +137,16 @@ export function getObservable<T>(
 		const obj = value as unknown as object;
 
 		let Adm: new (obj: any, graph: Graph) => Administration =
-			ObjectAdministration;
+			admTypes?.object ?? defaultAdministrationTypes.object;
 
 		if (Array.isArray(obj)) {
-			Adm = ArrayAdministration;
+			Adm = admTypes?.array ?? defaultAdministrationTypes.array;
 		} else if (obj instanceof Map || obj instanceof WeakMap) {
-			Adm = CollectionAdministration;
+			Adm = admTypes?.collection ?? defaultAdministrationTypes.collection;
 		} else if (obj instanceof Set || obj instanceof WeakSet) {
-			Adm = CollectionAdministration;
+			Adm = admTypes?.collection ?? defaultAdministrationTypes.collection;
 		} else if (obj instanceof Date) {
-			Adm = DateAdministration;
+			Adm = admTypes?.date ?? defaultAdministrationTypes.date;
 		} else if (!isPlainObject(value)) {
 			return value;
 		}

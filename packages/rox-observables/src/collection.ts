@@ -20,6 +20,26 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	valuesMap: SignalMap<K>;
 	keysAtom: AtomNode;
 
+	static proxyTraps: ProxyHandler<Set<unknown> | Map<unknown, unknown>> = {
+		get(target, name) {
+			const adm = getAdministration(target);
+			if (name === "size" && "size" in adm.source) {
+				return adm.size;
+			}
+
+			const val = adm.source[name];
+
+			if (collectionMethods.hasOwnProperty(name) && typeof val === "function") {
+				return collectionMethods[name];
+			}
+
+			return val;
+		},
+		preventExtensions() {
+			throw new Error(`observable objects cannot be frozen`);
+		},
+	};
+
 	constructor(source: Collection<K, V>, graph: Graph) {
 		super(source, graph);
 		this.hasMap = new AtomMap(graph, true);
@@ -28,8 +48,6 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		this.isMap =
 			typeof (source as Map<K, V>).set === "function" &&
 			typeof (source as Map<K, V>).get === "function";
-		this.proxyTraps.get = (_, name) =>
-			this.proxyGet(name as keyof Collection<K, V>);
 
 		if (process.env.NODE_ENV !== "production") {
 			this.source.forEach?.((value, key) => {
@@ -41,20 +59,6 @@ export class CollectionAdministration<K, V = K> extends Administration<
 				}
 			});
 		}
-	}
-
-	private proxyGet(name: keyof Collection<K, V>): unknown {
-		if (name === "size" && "size" in this.source) {
-			return this.size;
-		}
-
-		const val = this.source[name];
-
-		if (collectionMethods.hasOwnProperty(name) && typeof val === "function") {
-			return collectionMethods[name];
-		}
-
-		return val;
 	}
 
 	private hasEntry(key: K): boolean {

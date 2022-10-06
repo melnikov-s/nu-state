@@ -7,5 +7,9 @@ export {
 	getObservable,
 	getObservableClassInstance,
 	getInternalNode,
+	setAdministrationType,
 } from "./internal/lookup";
-export { extendObservableProxy } from "./internal/extendObservableProxy";
+export { ArrayAdministration } from "./array";
+export { CollectionAdministration } from "./collection";
+export { DateAdministration } from "./date";
+export { ObjectAdministration } from "./object";

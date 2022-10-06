@@ -14,10 +14,50 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 	valuesMap: SignalMap<number>;
 	keysAtom: AtomNode;
 
+	static proxyTraps: ProxyHandler<Array<unknown>> = {
+		get(target, name) {
+			const adm = getAdministration(target);
+			if (name === "length") {
+				return adm.getArrayLength();
+			}
+
+			if (typeof name === "number") {
+				return adm.get(name);
+			}
+
+			if (typeof name === "string" && String(parseInt(name)) === name) {
+				return adm.get(parseInt(name));
+			}
+
+			if (arrayMethods.hasOwnProperty(name)) {
+				return arrayMethods[name as keyof typeof arrayMethods];
+			}
+
+			return adm.source[name];
+		},
+
+		set(target, name, value) {
+			const adm = getAdministration(target);
+
+			if (name === "length") {
+				adm.setArrayLength(value as number);
+			} else if (typeof name === "number") {
+				adm.set(name, value);
+			} else if (typeof name === "string" && String(parseInt(name)) === name) {
+				adm.set(parseInt(name), value);
+			} else {
+				adm.source[name] = value;
+			}
+
+			return true;
+		},
+		preventExtensions() {
+			throw new Error(`observable objects cannot be frozen`);
+		},
+	};
+
 	constructor(source: T[] = [], graph: Graph) {
 		super(source, graph);
-		this.proxyTraps.get = (_, name) => this.proxyGet(name);
-		this.proxyTraps.set = (_, name, value) => this.proxySet(name, value);
 		this.valuesMap = new SignalMap(this.graph);
 		this.keysAtom = graph.createAtom();
 
@@ -28,40 +68,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 				}
 			}
 		}
-	}
-
-	private proxyGet(name: PropertyKey): unknown {
-		if (name === "length") {
-			return this.getArrayLength();
-		}
-
-		if (typeof name === "number") {
-			return this.get(name);
-		}
-
-		if (typeof name === "string" && String(parseInt(name)) === name) {
-			return this.get(parseInt(name));
-		}
-
-		if (arrayMethods.hasOwnProperty(name)) {
-			return arrayMethods[name as keyof typeof arrayMethods];
-		}
-
-		return this.source[name];
-	}
-
-	private proxySet(name: string | number | symbol, value: T | number): boolean {
-		if (name === "length") {
-			this.setArrayLength(value as number);
-		} else if (typeof name === "number") {
-			this.set(name, value as T);
-		} else if (typeof name === "string" && String(parseInt(name)) === name) {
-			this.set(parseInt(name), value as T);
-		} else {
-			this.source[name] = value;
-		}
-
-		return true;
 	}
 
 	protected reportObserveDeep(): void {

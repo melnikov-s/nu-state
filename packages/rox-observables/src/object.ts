@@ -24,27 +24,64 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	computedMap!: Map<PropertyKey, ComputedNode<T[keyof T]>>;
 	types: Map<PropertyKey, PropertyType>;
 
+	static proxyTraps: ProxyHandler<object> = {
+		has(target, name) {
+			const adm = getAdministration(target);
+
+			if (!(name in Object.prototype) && isPropertyKey(name))
+				return adm.has(name);
+			return Reflect.has(adm.source, name);
+		},
+
+		get(target, name) {
+			const adm = getAdministration(target);
+			if (
+				!(name in Object.prototype) &&
+				isPropertyKey(name) &&
+				(typeof adm.source !== "function" || name !== "prototype")
+			) {
+				return adm.read(name);
+			}
+
+			return Reflect.get(adm.source, name, adm.proxy);
+		},
+
+		set(target, name, value) {
+			if (!isPropertyKey(name)) return false;
+
+			const adm = getAdministration(target);
+			adm.write(name, value);
+
+			return true;
+		},
+
+		deleteProperty(target, name) {
+			if (!isPropertyKey(name)) return false;
+			const adm = getAdministration(target);
+			adm.remove(name);
+			return true;
+		},
+
+		ownKeys(target) {
+			const adm = getAdministration(target);
+			adm.graph.batch(() => {
+				adm.keysAtom.reportObserved();
+				adm.atom.reportObserved();
+			});
+
+			return Reflect.ownKeys(adm.source);
+		},
+		preventExtensions() {
+			throw new Error(`observable objects cannot be frozen`);
+		},
+	};
+
 	constructor(source: T = {} as T, graph: Graph) {
 		super(source, graph);
 		this.keysAtom = graph.createAtom();
 		this.hasMap = new AtomMap(graph, true);
 		this.valuesMap = new SignalMap(graph);
 		this.types = new Map();
-
-		if (typeof source === "function") {
-			this.proxyTraps.construct = (_, args) =>
-				this.proxyConstruct(args) as object;
-			this.proxyTraps.apply = (_, thisArg, args) =>
-				this.proxyApply(thisArg, args);
-		}
-
-		this.proxyTraps.get = (_, name) => this.proxyGet(name as keyof T);
-		this.proxyTraps.set = (_, name, value) =>
-			this.proxySet(name as keyof T, value);
-		this.proxyTraps.has = (_, name) => this.proxyHas(name as keyof T);
-		this.proxyTraps.deleteProperty = (_, name) =>
-			this.proxyDeleteProperty(name as keyof T);
-		this.proxyTraps.ownKeys = () => this.proxyOwnKeys();
 
 		if (process.env.NODE_ENV !== "production") {
 			Object.getOwnPropertyNames(source).forEach((name) => {
@@ -54,64 +91,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				}
 			});
 		}
-	}
-
-	private proxyConstruct(
-		args: unknown[]
-	): T extends new (args: unknown[]) => unknown ? InstanceType<T> : never {
-		const instance = Reflect.construct(this.source as Function, args);
-
-		return getObservable(instance, this.graph);
-	}
-
-	private proxyApply(
-		thisArg: unknown,
-		args: unknown[]
-	): T extends (args: unknown[]) => unknown ? ReturnType<T> : never {
-		return this.graph.batch(() =>
-			Reflect.apply(this.source as Function, thisArg, args)
-		);
-	}
-
-	private proxyHas(name: keyof T): boolean {
-		if (!(name in Object.prototype) && isPropertyKey(name))
-			return this.has(name);
-		return Reflect.has(this.source, name);
-	}
-
-	private proxyGet(name: keyof T): unknown {
-		if (
-			!(name in Object.prototype) &&
-			isPropertyKey(name) &&
-			(typeof this.source !== "function" || name !== "prototype")
-		) {
-			return this.read(name);
-		}
-
-		return Reflect.get(this.source, name, this.proxy);
-	}
-
-	private proxySet(name: keyof T, value: T[keyof T]): boolean {
-		if (!isPropertyKey(name)) return false;
-
-		this.write(name, value);
-
-		return true;
-	}
-
-	private proxyDeleteProperty(name: keyof T): boolean {
-		if (!isPropertyKey(name)) return false;
-		this.remove(name);
-		return true;
-	}
-
-	private proxyOwnKeys(): (string | symbol)[] {
-		this.graph.batch(() => {
-			this.keysAtom.reportObserved();
-			this.atom.reportObserved();
-		});
-
-		return Reflect.ownKeys(this.source);
 	}
 
 	private get(key: PropertyKey): T[keyof T] {

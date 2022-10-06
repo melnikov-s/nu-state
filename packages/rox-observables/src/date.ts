@@ -1,26 +1,26 @@
 import { Administration } from "./internal/Administration";
-import { Graph } from "./internal/graph";
 import { getAdministration } from "./internal/lookup";
 
 export class DateAdministration extends Administration<Date> {
-	constructor(source: Date, graph: Graph) {
-		super(source, graph);
-		this.proxyTraps.get = (_, name: keyof Date) => this.proxyGet(name);
-	}
+	static proxyTraps: ProxyHandler<Date> = {
+		get(target, name: keyof Date): unknown {
+			const adm = getAdministration(target);
+			if (typeof adm.source[name] === "function") {
+				if (typeof name === "string" && name.startsWith("set")) {
+					addDateSetMethod(name);
+				} else {
+					addDateGetMethod(name);
+				}
 
-	private proxyGet(name: keyof Date): unknown {
-		if (typeof this.source[name] === "function") {
-			if (typeof name === "string" && name.startsWith("set")) {
-				addDateSetMethod(name);
-			} else {
-				addDateGetMethod(name);
+				return dateMethods[name];
 			}
 
-			return dateMethods[name];
-		}
-
-		return this.source[name];
-	}
+			return adm.source[name];
+		},
+		preventExtensions() {
+			throw new Error(`observable objects cannot be frozen`);
+		},
+	};
 }
 
 const dateMethods = Object.create(null);
