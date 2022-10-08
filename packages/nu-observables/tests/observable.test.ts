@@ -15,6 +15,7 @@ import {
 	CollectionAdministration,
 	ArrayAdministration,
 	setAdministrationType,
+	isObservable,
 } from "../src";
 
 test("reportObserved returns observable", () => {
@@ -108,12 +109,12 @@ test("reportObserved on object (deep)", () => {
 	o.value.innerValue++;
 	expect(count).toBe(2);
 	ob.value = 2;
-	expect(count).toBe(3);
+	expect(count).toBe(2);
 	const value = o.value;
 	delete o.value;
-	expect(count).toBe(4);
+	expect(count).toBe(3);
 	value.innerValue++;
-	expect(count).toBe(4);
+	expect(count).toBe(3);
 });
 
 test("reportObserved on object (not deep)", () => {

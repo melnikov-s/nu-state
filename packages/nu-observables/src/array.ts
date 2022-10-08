@@ -51,9 +51,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 			return true;
 		},
-		preventExtensions() {
-			throw new Error(`observable objects cannot be frozen`);
-		},
 	};
 
 	constructor(source: T[] = [], graph: Graph) {

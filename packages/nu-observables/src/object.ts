@@ -71,9 +71,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 			return Reflect.ownKeys(adm.source);
 		},
-		preventExtensions() {
-			throw new Error(`observable objects cannot be frozen`);
-		},
 	};
 
 	constructor(source: T = {} as T, graph: Graph) {
@@ -138,9 +135,13 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 
 	protected reportObserveDeep(): void {
 		Object.getOwnPropertyNames(this.source).forEach((name) => {
-			const value = this.source[name];
-			if (value && typeof value === "object") {
-				getAdministration(getObservable(value, this.graph))?.reportObserved();
+			const type = this.getType(name as keyof T);
+
+			if (type === "observable") {
+				const value = this.source[name];
+				if (value && typeof value === "object") {
+					getAdministration(getObservable(value, this.graph))?.reportObserved();
+				}
 			}
 		});
 	}
