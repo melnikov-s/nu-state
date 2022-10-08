@@ -35,7 +35,7 @@ import {
 	createMicroTaskScheduler,
 } from "./scheduler";
 import { Observable } from "./ObservableClass";
-import { extendObservableProxy } from "rox-observables";
+import { extendObservableProxy } from "nu-observables";
 
 export {
 	action,

@@ -3,7 +3,7 @@ import {
 	getAdministration,
 	Graph,
 	isObservable,
-} from "rox-observables";
+} from "nu-observables";
 import {
 	AtomNode,
 	ComputedNode,
@@ -13,7 +13,7 @@ import {
 	batch,
 	runInAction,
 	isTracking,
-} from "rox-core";
+} from "nu-reactive-graph";
 
 const nodeMap = new WeakMap();
 
@@ -27,9 +27,9 @@ export {
 	untracked,
 	enforceActions,
 	onReactionsComplete,
-} from "rox-core";
+} from "nu-reactive-graph";
 
-export { isObservable, getSource as source } from "rox-observables";
+export { isObservable, getSource as source } from "nu-observables";
 
 let graph: Graph;
 

@@ -13,9 +13,9 @@ import {
 	isTracking,
 	onObservedStateChange,
 	ListenerNode,
-} from "rox-core";
+} from "nu-reactive-graph";
 
-export { isInAction, enforceActions, runInAction } from "rox-core";
+export { isInAction, enforceActions, runInAction } from "nu-reactive-graph";
 
 export const graph = createGraph({
 	createAtom() {

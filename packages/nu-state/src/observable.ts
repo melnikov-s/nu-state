@@ -1,5 +1,5 @@
 import { isNonPrimitive } from "./utils";
-import { getObservable } from "rox-observables";
+import { getObservable } from "nu-observables";
 import { getGraph } from "./graph";
 
 export function observable<T extends object>(object: T): T {

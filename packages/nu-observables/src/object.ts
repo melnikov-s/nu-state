@@ -178,15 +178,12 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 			}
 			case "observable": {
 				const atom = this.valuesMap.getOrCreate(key, this.source[key]);
-				return this.graph.onObservedStateChange(
-					atom.node ?? this.atom,
-					callback
-				);
+				return this.graph.onObservedStateChange(atom.node ?? atom, callback);
 			}
 			case "computed": {
 				const computed = this.getComputed(key);
 				return this.graph.onObservedStateChange(
-					computed.node ?? this.atom,
+					computed.node ?? computed,
 					callback
 				);
 			}
