@@ -28,7 +28,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+		"prepublishOnly": "yarn build"
   },
   "dependencies": {
     "nu-observables": "workspace:*",

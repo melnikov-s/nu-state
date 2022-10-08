@@ -35,7 +35,6 @@ import {
 	createMicroTaskScheduler,
 } from "./scheduler";
 import { Observable } from "./ObservableClass";
-import { extendObservableProxy } from "nu-observables";
 
 export {
 	action,
@@ -65,7 +64,6 @@ export {
 	reaction,
 	runInAction,
 	task,
-	extendObservableProxy as unstable_extendObservableProxy,
 	untracked,
 };
 
