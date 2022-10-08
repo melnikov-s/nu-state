@@ -35,9 +35,6 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 			return val;
 		},
-		preventExtensions() {
-			throw new Error(`observable objects cannot be frozen`);
-		},
 	};
 
 	constructor(source: Collection<K, V>, graph: Graph) {

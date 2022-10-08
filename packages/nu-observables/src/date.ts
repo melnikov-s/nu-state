@@ -17,9 +17,6 @@ export class DateAdministration extends Administration<Date> {
 
 			return adm.source[name];
 		},
-		preventExtensions() {
-			throw new Error(`observable objects cannot be frozen`);
-		},
 	};
 }
 

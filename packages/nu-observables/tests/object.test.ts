@@ -479,18 +479,6 @@ test("[mobx-test] adding a different key doesn't trigger a pending key", () => {
 	expect(counter).toBe(2);
 });
 
-test("[mobx-test] ownKeys invariant not broken - 1", () => {
-	const a = object({
-		x: 3,
-		get y() {
-			return 1;
-		},
-	});
-	expect(() => {
-		Object.freeze(a);
-	}).toThrow("cannot be frozen");
-});
-
 test("[mobx-test] deleting / recreate prop", () => {
 	const value = object({
 		foo: undefined, // if foo is something like 'abc', it works.
