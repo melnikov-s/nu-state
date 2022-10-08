@@ -7,8 +7,8 @@ export default defineConfig({
 		minify: false,
 		lib: {
 			entry: resolve(__dirname, "src/index.ts"),
-			name: "rox",
-			fileName: (format) => `rox.${format}.js`,
+			name: "nu-state",
+			fileName: (format) => `nu-state.${format}.js`,
 		},
 		rollupOptions: {},
 	},

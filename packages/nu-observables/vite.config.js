@@ -7,8 +7,8 @@ export default defineConfig({
 		minify: false,
 		lib: {
 			entry: resolve(__dirname, "src/index.ts"),
-			name: "rox-observables",
-			fileName: (format) => `rox-observables.${format}.js`,
+			name: "nu-observables",
+			fileName: (format) => `nu-observables.${format}.js`,
 		},
 		rollupOptions: {},
 	},

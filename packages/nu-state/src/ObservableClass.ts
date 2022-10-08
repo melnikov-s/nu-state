@@ -1,4 +1,4 @@
-import { getObservableClassInstance } from "rox-observables";
+import { getObservableClassInstance } from "nu-observables";
 import { getGraph } from "./graph";
 
 export class Observable {

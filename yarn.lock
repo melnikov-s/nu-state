@@ -2544,6 +2544,69 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nu-observables@workspace:*, nu-observables@workspace:packages/nu-observables":
+  version: 0.0.0-use.local
+  resolution: "nu-observables@workspace:packages/nu-observables"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": ^5.36.2
+    "@typescript-eslint/parser": ^5.36.2
+    eslint: ^8.23.0
+    eslint-config-prettier: ^8.5.0
+    eslint-plugin-prettier: ^4.2.1
+    jsdom: ^20.0.0
+    nu-reactive-graph: "workspace: *"
+    prettier: ^2.7.1
+    typescript: ^4.8.3
+    vite: ^3.1.0
+    vite-plugin-dts: ^1.4.1
+    vitest: ^0.23.2
+  languageName: unknown
+  linkType: soft
+
+"nu-reactive-graph@workspace: *, nu-reactive-graph@workspace:*, nu-reactive-graph@workspace:packages/nu-reactive-graph":
+  version: 0.0.0-use.local
+  resolution: "nu-reactive-graph@workspace:packages/nu-reactive-graph"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": ^5.36.2
+    "@typescript-eslint/parser": ^5.36.2
+    eslint: ^8.23.0
+    eslint-config-prettier: ^8.5.0
+    eslint-plugin-prettier: ^4.2.1
+    prettier: ^2.7.1
+    typescript: ^4.8.3
+    vite: ^3.1.0
+    vite-plugin-dts: ^1.4.1
+    vitest: ^0.23.2
+  languageName: unknown
+  linkType: soft
+
+"nu-state-monorepo@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "nu-state-monorepo@workspace:."
+  languageName: unknown
+  linkType: soft
+
+"nu-state@workspace:packages/nu-state":
+  version: 0.0.0-use.local
+  resolution: "nu-state@workspace:packages/nu-state"
+  dependencies:
+    "@types/jest": ^29.0.0
+    "@typescript-eslint/eslint-plugin": ^5.36.2
+    "@typescript-eslint/parser": ^5.36.2
+    eslint: ^8.23.0
+    eslint-config-prettier: ^8.5.0
+    eslint-plugin-prettier: ^4.2.1
+    mobx: ^6.6.2
+    nu-observables: "workspace:*"
+    nu-reactive-graph: "workspace:*"
+    prettier: ^2.7.1
+    typescript: ^4.8.3
+    vite: ^3.1.0
+    vite-plugin-dts: ^1.4.1
+    vitest: ^0.23.2
+  languageName: unknown
+  linkType: soft
+
 "nwsapi@npm:^2.2.0":
   version: 2.2.2
   resolution: "nwsapi@npm:2.2.2"
@@ -2936,69 +2999,6 @@ __metadata:
   checksum: 9034814383ca5bdb4bea6d499270aeb31cdb0bb884f81b0c6a1d19c63cc973f040e6ee09b7af8a7169dd231c090f4b44ef8b99c4bfdf884aceeb3dcefb8cfa14
   languageName: node
   linkType: hard
-
-"rox-core@workspace: *, rox-core@workspace:*, rox-core@workspace:packages/rox-core":
-  version: 0.0.0-use.local
-  resolution: "rox-core@workspace:packages/rox-core"
-  dependencies:
-    "@typescript-eslint/eslint-plugin": ^5.36.2
-    "@typescript-eslint/parser": ^5.36.2
-    eslint: ^8.23.0
-    eslint-config-prettier: ^8.5.0
-    eslint-plugin-prettier: ^4.2.1
-    prettier: ^2.7.1
-    typescript: ^4.8.3
-    vite: ^3.1.0
-    vite-plugin-dts: ^1.4.1
-    vitest: ^0.23.2
-  languageName: unknown
-  linkType: soft
-
-"rox-monorepo@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "rox-monorepo@workspace:."
-  languageName: unknown
-  linkType: soft
-
-"rox-observables@workspace:*, rox-observables@workspace:packages/rox-observables":
-  version: 0.0.0-use.local
-  resolution: "rox-observables@workspace:packages/rox-observables"
-  dependencies:
-    "@typescript-eslint/eslint-plugin": ^5.36.2
-    "@typescript-eslint/parser": ^5.36.2
-    eslint: ^8.23.0
-    eslint-config-prettier: ^8.5.0
-    eslint-plugin-prettier: ^4.2.1
-    jsdom: ^20.0.0
-    prettier: ^2.7.1
-    rox-core: "workspace: *"
-    typescript: ^4.8.3
-    vite: ^3.1.0
-    vite-plugin-dts: ^1.4.1
-    vitest: ^0.23.2
-  languageName: unknown
-  linkType: soft
-
-"rox@workspace:packages/rox":
-  version: 0.0.0-use.local
-  resolution: "rox@workspace:packages/rox"
-  dependencies:
-    "@types/jest": ^29.0.0
-    "@typescript-eslint/eslint-plugin": ^5.36.2
-    "@typescript-eslint/parser": ^5.36.2
-    eslint: ^8.23.0
-    eslint-config-prettier: ^8.5.0
-    eslint-plugin-prettier: ^4.2.1
-    mobx: ^6.6.2
-    prettier: ^2.7.1
-    rox-core: "workspace:*"
-    rox-observables: "workspace:*"
-    typescript: ^4.8.3
-    vite: ^3.1.0
-    vite-plugin-dts: ^1.4.1
-    vitest: ^0.23.2
-  languageName: unknown
-  linkType: soft
 
 "run-parallel@npm:^1.1.9":
   version: 1.2.0

@@ -1,4 +1,4 @@
-import { Signal as SignalClass } from "rox-core";
+import { Signal as SignalClass } from "nu-reactive-graph";
 import { defaultEquals } from "./utils";
 import { setNode } from "./graph";
 

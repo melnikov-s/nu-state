@@ -1,4 +1,4 @@
-import { ComputedNode } from "rox-core";
+import { ComputedNode } from "nu-reactive-graph";
 import { setNode, getNode } from "./graph";
 
 export type Computed<T> = () => T;

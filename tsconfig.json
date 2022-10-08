@@ -1,7 +1,7 @@
 {
 	"exclude": ["packages/**/tests/**", "packages/**/dist/**"],
 	"references": [
-		{ "path": "./packages/rox-core" },
-		{ "path": "./packages/rox-observables" }
+		{ "path": "./packages/nu-reactive-graph" },
+		{ "path": "./packages/nu-observables" }
 	]
 }

@@ -1,26 +1,26 @@
 {
-	"name": "rox-observables",
+	"name": "nu-observables",
 	"version": "0.0.1",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/melnikov-s/rox.git"
+		"url": "git+https://github.com/melnikov-s/nu-state.git"
 	},
 	"author": "Sergey Melnikov",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/melnikov-s/rox/issues"
+		"url": "https://github.com/melnikov-s/nu-state/issues"
 	},
-	"homepage": "https://github.com/melnikov-s/rox#readme",
+	"homepage": "https://github.com/melnikov-s/nu-state#readme",
 	"files": [
 		"dist"
 	],
 	"types": "./dist/index.d.ts",
-	"module": "./dist/rox-observables.es.js",
-	"main": "./dist/rox-observables.umd.js",
+	"module": "./dist/nu-observables.es.js",
+	"main": "./dist/nu-observables.umd.js",
 	"exports": {
 		".": {
-			"import": "./dist/rox-observables.es.js",
-			"require": "./dist/rox-observables.umd.js"
+			"import": "./dist/nu-observables.es.js",
+			"require": "./dist/nu-observables.umd.js"
 		}
 	},
 	"scripts": {
@@ -37,8 +37,8 @@
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-prettier": "^4.2.1",
 		"jsdom": "^20.0.0",
+		"nu-reactive-graph": "workspace: *",
 		"prettier": "^2.7.1",
-		"rox-core": "workspace: *",
 		"typescript": "^4.8.3",
 		"vite": "^3.1.0",
 		"vite-plugin-dts": "^1.4.1",

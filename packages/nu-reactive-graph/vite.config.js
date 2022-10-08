@@ -7,8 +7,8 @@ export default defineConfig({
 		minify: false,
 		lib: {
 			entry: resolve(__dirname, "src/index.ts"),
-			name: "rox-core",
-			fileName: (format) => `rox-core.${format}.js`,
+			name: "nu-reactive-graph",
+			fileName: (format) => `nu-reactive-graph.${format}.js`,
 		},
 		rollupOptions: {},
 	},

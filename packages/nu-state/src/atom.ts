@@ -1,4 +1,4 @@
-import { AtomNode } from "rox-core";
+import { AtomNode } from "nu-reactive-graph";
 
 export type Atom<T = unknown> = {
 	reportChanged: (value?: T) => void;

@@ -1,5 +1,5 @@
 {
-  "name": "rox-monorepo",
+  "name": "nu-state-monorepo",
   "private": true,
   "workspaces": [
     "packages/*"

@@ -1,4 +1,4 @@
-import { onReactionsComplete, batch } from "rox-core";
+import { onReactionsComplete, batch } from "nu-reactive-graph";
 import { listener as makeListener, Listener } from "./listener";
 import { reaction } from "./reaction";
 import { effect } from "./effect";

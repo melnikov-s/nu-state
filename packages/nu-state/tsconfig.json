@@ -7,10 +7,10 @@
 	"include": ["src"],
 	"references": [
 		{
-			"path": "../rox-core"
+			"path": "../nu-reactive-graph"
 		},
 		{
-			"path": "../rox-observables"
+			"path": "../nu-observables"
 		}
 	]
 }

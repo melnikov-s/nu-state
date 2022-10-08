@@ -1,4 +1,4 @@
-import { ListenerNode } from "rox-core";
+import { ListenerNode } from "nu-reactive-graph";
 
 export type Listener = {
 	dispose: () => void;
