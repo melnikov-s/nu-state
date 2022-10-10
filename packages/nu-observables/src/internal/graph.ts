@@ -29,6 +29,9 @@ export type Graph = {
 		fn: T,
 		context: unknown
 	): ComputedNode<ReturnType<T>>;
+	effect(callback: () => void): () => void;
+	enforceActions(enforce: boolean): void;
+	isInAction(): boolean;
 };
 
 const defaultGraph: Partial<Graph> = {
@@ -52,7 +55,19 @@ const defaultGraph: Partial<Graph> = {
 	onObservedStateChange() {
 		return () => {};
 	},
+	effect(fn) {
+		fn();
+		return () => {};
+	},
+	enforceActions() {},
+	isInAction() {
+		return false;
+	},
 };
+
+export function hasGraphFeature(graph: Graph, feature: keyof Graph): boolean {
+	return graph[feature] !== defaultGraph[feature];
+}
 
 export function createGraph(newGraph: Partial<Graph>): Graph {
 	return Object.assign({}, defaultGraph, newGraph) as Graph;

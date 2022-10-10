@@ -13,7 +13,10 @@ import {
 	batch,
 	runInAction,
 	isTracking,
+	enforceActions,
+	isInAction,
 } from "nu-reactive-graph";
+import { effect } from "./effect";
 
 const nodeMap = new WeakMap();
 
@@ -49,6 +52,9 @@ export function getGraph(): Graph {
 			},
 			isTracking,
 			onObservedStateChange,
+			enforceActions,
+			effect,
+			isInAction,
 		}));
 }
 

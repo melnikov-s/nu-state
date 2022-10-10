@@ -1,4 +1,4 @@
-import { isObservable } from "../src";
+import { isObservable } from "nu-observables";
 import { computed, effect, reaction, observable, source } from "./utils";
 
 const array = (obj: any[] = []): any[] => {

@@ -1,4 +1,4 @@
-import { getAdministration, isObservable } from "../src";
+import { getAdministration, isObservable } from "nu-observables";
 import { effect, observable, reaction, source } from "./utils";
 
 const map = <K = any, V = any>(obj: Map<K, V> = new Map()): Map<K, V> => {

@@ -1,39 +1,13 @@
 import {
-	createGraph,
 	getObservable,
 	getObservableClassInstance,
 	getSource,
 	getAdministration,
-} from "../src";
-import {
-	AtomNode,
-	ComputedNode,
-	batch,
-	runInAction,
-	isTracking,
-	onObservedStateChange,
-	ListenerNode,
-} from "nu-reactive-graph";
-
-export { isInAction, enforceActions, runInAction } from "nu-reactive-graph";
-
-export const graph = createGraph({
-	createAtom() {
-		return new AtomNode();
-	},
-	createComputed(fn, context) {
-		return new ComputedNode(fn, undefined, false, context);
-	},
-	batch,
-	runInAction(fn) {
-		return runInAction(fn, false);
-	},
-	isTracking,
-	onObservedStateChange,
-});
+	getTestGraph,
+} from "nu-observables";
 
 export function observable<T>(obj: T): T {
-	return getObservable(obj, graph);
+	return getObservable(obj, getTestGraph());
 }
 
 export function source<T>(obj: T): T {
@@ -41,7 +15,7 @@ export function source<T>(obj: T): T {
 }
 
 export function computed<T>(fn: () => T) {
-	const computedNode = new ComputedNode(fn);
+	const computedNode = getTestGraph().createComputed(fn, null);
 
 	const computed = computedNode.get.bind(computedNode);
 
@@ -49,44 +23,43 @@ export function computed<T>(fn: () => T) {
 }
 
 export function effect(callback: () => void): () => void {
-	const boundCallback: () => void = () => callback.call(null, listener);
-
-	const listener = new ListenerNode(() => {
-		listener.track(boundCallback);
-	});
-
-	listener.track(boundCallback);
-
-	return function (): void {
-		listener.dispose();
-	};
+	return getTestGraph().effect(callback);
 }
 
 export function reaction<T>(
 	track: () => T,
-	callback: (a: T) => void
+	callback: (value: T) => void
 ): () => void {
 	let value: T;
+	let prevValue: T;
+	let firstRun = true;
 
-	const listener = new ListenerNode(() => {
-		const newValue = listener.track(track);
-
-		if (newValue !== value) {
-			value = newValue;
-			callback(value);
+	return getTestGraph().effect(() => {
+		value = track();
+		if (!firstRun) {
+			if (value !== prevValue) {
+				callback(value);
+			}
 		}
+		prevValue = value;
+		firstRun = false;
 	});
-
-	value = listener.track(track);
-
-	return function (): void {
-		listener.dispose();
-	};
 }
 
+export function isInAction() {
+	return getTestGraph().isInAction();
+}
+
+export function runInAction<T>(fn: () => T) {
+	return getTestGraph().runInAction(fn);
+}
+
+export function enforceActions(enforce: boolean) {
+	return getTestGraph().enforceActions(enforce);
+}
 export class Observable {
 	constructor() {
-		return getObservableClassInstance(this, graph);
+		return getObservableClassInstance(this, getTestGraph());
 	}
 }
 

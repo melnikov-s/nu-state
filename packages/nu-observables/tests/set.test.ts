@@ -1,4 +1,4 @@
-import { isObservable } from "../src";
+import { isObservable } from "nu-observables";
 import { effect, observable, source } from "./utils";
 
 const set = <T>(obj: Set<T> = new Set()): Set<T> => {

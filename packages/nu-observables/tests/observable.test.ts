@@ -1,13 +1,4 @@
 import {
-	observable,
-	effect,
-	source,
-	reportObserved,
-	reportChanged,
-	graph,
-} from "./utils";
-
-import {
 	getInternalNode,
 	getObservable,
 	getObservableClassInstance,
@@ -15,8 +6,16 @@ import {
 	CollectionAdministration,
 	ArrayAdministration,
 	setAdministrationType,
-	isObservable,
-} from "../src";
+	getTestGraph,
+} from "nu-observables";
+
+import {
+	observable,
+	effect,
+	source,
+	reportObserved,
+	reportChanged,
+} from "./utils";
 
 test("reportObserved returns observable", () => {
 	const o = observable({});
@@ -400,11 +399,11 @@ test("can set a custom administration for object", () => {
 		};
 	}
 
-	const newGraph = { ...graph };
+	const newGraph = { ...getTestGraph() };
 
 	setAdministrationType({ object: CustomObjectAdministration }, newGraph);
 
-	const oA = getObservable({ value: 0 }, graph);
+	const oA = getObservable({ value: 0 }, getTestGraph());
 	oA.value;
 	expect(count).toBe(0);
 	const oB = getObservable({ value: { value: 0 } }, newGraph);
@@ -428,7 +427,7 @@ test("can set a custom administration for class", () => {
 		};
 	}
 
-	const newGraph = { ...graph };
+	const newGraph = { ...getTestGraph() };
 	setAdministrationType({ object: CustomObjectAdministration }, newGraph);
 
 	class Observable {
@@ -456,11 +455,11 @@ test("can set a custom administration for array", () => {
 		};
 	}
 
-	const newGraph = { ...graph };
+	const newGraph = { ...getTestGraph() };
 
 	setAdministrationType({ array: CustomArrayAdministration }, newGraph);
 
-	const oA = getObservable([0], graph);
+	const oA = getObservable([0], getTestGraph());
 	oA[0];
 	expect(ran).toBe(false);
 	const oB = getObservable([0], newGraph);
@@ -480,14 +479,14 @@ test("can set a custom administration for collection", () => {
 		};
 	}
 
-	const newGraph = { ...graph };
+	const newGraph = { ...getTestGraph() };
 
 	setAdministrationType(
 		{ collection: CustomCollectionAdministration },
 		newGraph
 	);
 
-	const oA = getObservable(new Map(), graph);
+	const oA = getObservable(new Map(), getTestGraph());
 	oA.has(0);
 	expect(ran).toBe(false);
 	const oB = getObservable(new Map(), newGraph);
@@ -496,7 +495,7 @@ test("can set a custom administration for collection", () => {
 });
 
 test("prevent setting administration types multiple times on the same graph", () => {
-	const newGraph = { ...graph };
+	const newGraph = { ...getTestGraph() };
 	setAdministrationType({}, newGraph);
 	expect(() => setAdministrationType({}, newGraph)).toThrowError(
 		"Administration type already set for this graph"

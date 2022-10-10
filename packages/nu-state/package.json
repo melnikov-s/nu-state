@@ -29,7 +29,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-		"prepublishOnly": "yarn build"
+    "prepublishOnly": "yarn build"
   },
   "dependencies": {
     "nu-observables": "workspace:*",

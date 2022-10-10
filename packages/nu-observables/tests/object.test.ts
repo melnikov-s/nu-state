@@ -1,4 +1,4 @@
-import { isObservable } from "../src";
+import { isObservable } from "nu-observables";
 
 import { effect, reaction, observable, runInAction, source } from "./utils";
 
@@ -323,7 +323,7 @@ test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 
 	expect(events).toEqual([undefined]);
 });
 
-test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 2", () => {
+test.only("[mobx-test] should react to key removal (unless reconfiguring to empty) - 2", () => {
 	const events = [];
 	const x = object({
 		y: 1,
