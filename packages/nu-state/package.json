@@ -29,7 +29,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "yarn build",
+    "perf": "vitest -c vite.perf.config.js"
   },
   "dependencies": {
     "nu-observables": "workspace:*",

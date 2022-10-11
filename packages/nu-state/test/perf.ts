@@ -1,4 +1,4 @@
-import * as lobx from "../lib/lobx";
+import * as nu from "nu-state";
 import * as mobx from "mobx";
 
 const performance = global["performance"];
@@ -32,21 +32,21 @@ function runSamples(perfTest, resultsFn) {
 	resultsFn(finalResults);
 }
 
-describe("lobx tests", () => {
-	const { computed, observable, reaction, effect, runInAction } = lobx;
+describe("nu-state tests", () => {
+	const { computed, observable, reaction, effect, runInAction, signal } = nu;
 
 	test("one observes ten thousand that observe one", function (done) {
-		console.log("-------- lobx results --------");
+		console.log("-------- nu-state results --------");
 		runSamples(
 			() => {
-				const a = signal(2);
+				const [a, setA] = signal(2);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
 					(function (idx) {
 						observers.push(
 							computed(function () {
-								return a.get() * idx;
+								return a() * idx;
 							})
 						);
 					})(i);
@@ -54,21 +54,21 @@ describe("lobx tests", () => {
 
 				const b = computed(function () {
 					let res = 0;
-					for (let i = 0; i < observers.length; i++) res += observers[i].get();
+					for (let i = 0; i < observers.length; i++) res += observers[i]();
 					return res;
 				});
 
 				const start = performance.now();
 
 				reaction(
-					() => b.get(),
+					() => b(),
 					() => {}
 				);
-				expect(b.get()).toBe(99990000);
+				expect(b()).toBe(99990000);
 				const initial = performance.now();
 
-				a.set(3);
-				expect(b.get()).toBe(149985000);
+				setA(3);
+				expect(b()).toBe(149985000);
 				const end = performance.now();
 
 				return [initial - start, end - initial];
@@ -83,20 +83,18 @@ describe("lobx tests", () => {
 				);
 			}
 		);
-
-		done();
 	});
 
 	test("five hundred properties that observe their sibling", function (done) {
 		runSamples(
 			() => {
-				const a = signal(1);
+				const [a, setA] = signal(1);
 				const observables: any[] = [a];
 				for (let i = 0; i < 500; i++) {
 					(function (idx) {
 						observables.push(
 							computed(function () {
-								return observables[idx].get() + 1;
+								return observables[idx]() + 1;
 							})
 						);
 					})(i);
@@ -106,14 +104,14 @@ describe("lobx tests", () => {
 
 				const last = observables[observables.length - 1];
 				reaction(
-					() => last.get(),
+					() => last(),
 					() => {}
 				);
-				expect(last.get()).toBe(501);
+				expect(last()).toBe(501);
 				const initial = performance.now();
 
-				a.set(2);
-				expect(last.get()).toBe(502);
+				setA(2);
+				expect(last()).toBe(502);
 				const end = performance.now();
 				return [initial - start, end - initial];
 			},
@@ -127,7 +125,6 @@ describe("lobx tests", () => {
 				);
 			}
 		);
-		done();
 	});
 
 	test("late dependency change", function (done) {
@@ -138,22 +135,22 @@ describe("lobx tests", () => {
 
 				const sum = computed(function () {
 					let sum = 0;
-					for (let i = 0; i < 100; i++) sum += values[i].get();
+					for (let i = 0; i < 100; i++) sum += values[i][0]();
 					return sum;
 				});
 
 				reaction(
-					() => sum.get(),
+					() => sum(),
 					() => {}
 				);
 
 				const start = performance.now();
 
 				runInAction(() => {
-					for (let i = 0; i < 10000; i++) values[99].set(i);
+					for (let i = 0; i < 10000; i++) values[99][1](i);
 				});
 
-				expect(sum.get()).toBe(9999);
+				expect(sum()).toBe(9999);
 				return [performance.now() - start];
 			},
 			(results) => {
@@ -162,20 +159,19 @@ describe("lobx tests", () => {
 				);
 			}
 		);
-		done();
 	});
 
 	test("lots of unused computables", function (done) {
 		runSamples(
 			() => {
-				const a = signal(1);
+				const [a, setA] = signal(1);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
 					(function (idx) {
 						observers.push(
 							computed(function () {
-								return a.get() * idx;
+								return a() * idx;
 							})
 						);
 					})(i);
@@ -183,12 +179,12 @@ describe("lobx tests", () => {
 
 				const b = computed(function () {
 					let res = 0;
-					for (let i = 0; i < observers.length; i++) res += observers[i].get();
+					for (let i = 0; i < observers.length; i++) res += observers[i]();
 					return res;
 				});
 
 				let sum = 0;
-				const subscription = effect(() => (sum = b.get()));
+				const subscription = effect(() => (sum = b()));
 
 				expect(sum).toBe(49995000);
 
@@ -196,7 +192,7 @@ describe("lobx tests", () => {
 
 				const start = performance.now();
 
-				a.set(3);
+				setA(3);
 				expect(sum).toEqual(49995000);
 
 				const end = performance.now();
@@ -206,26 +202,24 @@ describe("lobx tests", () => {
 				console.log("Unused computables -   Updated in " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("many unreferenced observables", function (done) {
 		runSamples(
 			() => {
-				const a = signal(3);
-				const b = signal(6);
-				const c = signal(7);
+				const [a, setA] = signal(3);
+				const [b, setB] = signal(6);
+				const [c, setC] = signal(7);
 				const d = computed(function () {
-					return a.get() * b.get() * c();
+					return a() * b() * c();
 				});
-				expect(d.get()).toBe(126);
+				expect(d()).toBe(126);
 
 				const start = performance.now();
 				runInAction(() => {
 					for (let i = 0; i < 10000; i++) {
-						c.set(i);
-						d.get();
+						setC(i);
+						d();
 					}
 				});
 
@@ -237,8 +231,6 @@ describe("lobx tests", () => {
 				console.log("Unused observables -  Updated in " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("computed memoization", function (done) {
@@ -247,21 +239,17 @@ describe("lobx tests", () => {
 				const computeds = [];
 				for (let i = 0; i < 40; i++) {
 					computeds.push(
-						computed(() =>
-							i ? computeds[i - 1].get() + computeds[i - 1].get() : 1
-						)
+						computed(() => (i ? computeds[i - 1]() + computeds[i - 1]() : 1))
 					);
 				}
 				const start = performance.now();
-				expect(computeds[27].get()).toBe(134217728);
+				expect(computeds[27]()).toBe(134217728);
 				return [performance.now() - start];
 			},
 			(results) => {
 				console.log("computed memoization " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("object observation (empty)", function (done) {
@@ -278,8 +266,6 @@ describe("lobx tests", () => {
 				console.log("object observation (empty) " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("array observation (empty)", function (done) {
@@ -296,8 +282,6 @@ describe("lobx tests", () => {
 				console.log("array observation (empty) " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("object observation", function (done) {
@@ -320,8 +304,6 @@ describe("lobx tests", () => {
 				console.log("object observation " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("array observation", function (done) {
@@ -350,19 +332,17 @@ describe("lobx tests", () => {
 				console.log("array observation " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 });
 
 describe("mobx tests", () => {
-	const { computed, observable, reaction, effect, runInAction } = mobx;
+	const { computed, observable, reaction, autorun, runInAction } = mobx;
 
 	test("one observes ten thousand that observe one", function (done) {
 		console.log("-------- mobx results --------");
 		runSamples(
 			() => {
-				const a = signal(2);
+				const a = observable.box(2);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
@@ -406,14 +386,12 @@ describe("mobx tests", () => {
 				);
 			}
 		);
-
-		done();
 	});
 
 	test("five hundred properties that observe their sibling", function (done) {
 		runSamples(
 			() => {
-				const a = signal(1);
+				const a = observable.box(1);
 				const observables: any = [a];
 				for (let i = 0; i < 500; i++) {
 					(function (idx) {
@@ -450,14 +428,13 @@ describe("mobx tests", () => {
 				);
 			}
 		);
-		done();
 	});
 
 	test("late dependency change", function (done) {
 		runSamples(
 			() => {
 				const values = [];
-				for (let i = 0; i < 100; i++) values.push(signal(0));
+				for (let i = 0; i < 100; i++) values.push(observable.box(0));
 
 				const sum = computed(function () {
 					let sum = 0;
@@ -485,13 +462,12 @@ describe("mobx tests", () => {
 				);
 			}
 		);
-		done();
 	});
 
 	test("lots of unused computables", function (done) {
 		runSamples(
 			() => {
-				const a = signal(1);
+				const a = observable.box(1);
 
 				const observers = [];
 				for (let i = 0; i < 10000; i++) {
@@ -511,7 +487,7 @@ describe("mobx tests", () => {
 				});
 
 				let sum = 0;
-				const subscription = effect(() => (sum = b.get()));
+				const subscription = autorun(() => (sum = b.get()));
 
 				expect(sum).toBe(49995000);
 
@@ -529,18 +505,16 @@ describe("mobx tests", () => {
 				console.log("Unused computables -   Updated in " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("many unreferenced observables", function (done) {
 		runSamples(
 			() => {
-				const a = signal(3);
-				const b = signal(6);
-				const c = signal(7);
+				const a = observable.box(3);
+				const b = observable.box(6);
+				const c = observable.box(7);
 				const d = computed(function () {
-					return a.get() * b.get() * c();
+					return a.get() * b.get() * c.get();
 				});
 				expect(d.get()).toBe(126);
 
@@ -560,8 +534,6 @@ describe("mobx tests", () => {
 				console.log("Unused observables -  Updated in " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("computed memoization", function (done) {
@@ -583,8 +555,6 @@ describe("mobx tests", () => {
 				console.log("computed memoization " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("object observation (empty)", function (done) {
@@ -601,8 +571,6 @@ describe("mobx tests", () => {
 				console.log("object observation (empty) " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("array observation (empty)", function (done) {
@@ -619,8 +587,6 @@ describe("mobx tests", () => {
 				console.log("array observation (empty) " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("object observation", function (done) {
@@ -643,8 +609,6 @@ describe("mobx tests", () => {
 				console.log("object observation " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 
 	test("array observation", function (done) {
@@ -673,7 +637,5 @@ describe("mobx tests", () => {
 				console.log("array observation " + results[0] + " ms.");
 			}
 		);
-
-		done();
 	});
 });

@@ -61,7 +61,7 @@ test("can't call task outside of an action", async () => {
 	}
 
 	expect(error).toEqual(
-		new Error("lobx: can't call `task` outside of an action")
+		new Error("nu-state: can't call `task` outside of an action")
 	);
 });
 
@@ -71,7 +71,7 @@ test("if task is called within an action it must return a promise", () => {
 	};
 
 	expect(() => runInAction(f)).toThrowErrorMatchingInlineSnapshot(
-		`"lobx: when task is used in an action that action must return a promise, instead got :undefined"`
+		`"nu-state: when task is used in an action that action must return a promise, instead got :undefined"`
 	);
 });
 

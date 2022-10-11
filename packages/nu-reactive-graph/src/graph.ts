@@ -126,7 +126,7 @@ function run<T>(fn: () => T, isUntracked = true, asAction = false): T {
 				taskCalledStack.pop();
 				taskError = true;
 				throw new Error(
-					"lobx: when task is used in an action that action must return a promise, instead got :" +
+					"nu-state: when task is used in an action that action must return a promise, instead got :" +
 						typeof result
 				);
 			}
@@ -384,7 +384,7 @@ export function runInAction<T>(fn: () => T, untracked = true): T {
 
 export function task<T>(promise: Promise<T>): Promise<T> {
 	if (!inBatch) {
-		throw new Error("lobx: can't call `task` outside of an action");
+		throw new Error("nu-state: can't call `task` outside of an action");
 	}
 	const wasInAction = inAction;
 	if (wasInAction) {
@@ -414,7 +414,7 @@ export function batch<T>(fn: () => T): T {
 export function endAction(): void {
 	if (actionCallDepth === 0) {
 		throw new Error(
-			"lobx: attempted to end an action that has not been started"
+			"nu-state: attempted to end an action that has not been started"
 		);
 	}
 	actionCallDepth--;
@@ -433,7 +433,7 @@ export function startAction(): void {
 export function endBatch(): void {
 	if (callDepth === 0) {
 		throw new Error(
-			"lobx: attempted to end a batch/action that has not been started"
+			"nu-state: attempted to end a batch/action that has not been started"
 		);
 	}
 
