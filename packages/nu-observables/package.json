@@ -1,6 +1,6 @@
 {
 	"name": "nu-observables",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/melnikov-s/nu-state.git"
@@ -13,7 +13,7 @@
 	"homepage": "https://github.com/melnikov-s/nu-state#readme",
 	"files": [
 		"dist",
-		"tests"
+		"test"
 	],
 	"types": "./dist/index.d.ts",
 	"module": "./dist/nu-observables.es.js",
