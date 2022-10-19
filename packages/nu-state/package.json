@@ -17,6 +17,7 @@
   "types": "./dist/index.d.ts",
   "module": "./dist/nu-state.es.js",
   "main": "./dist/nu-state.umd.js",
+  "sideEffects": false,
   "exports": {
     ".": {
       "import": "./dist/nu-state.es.js",

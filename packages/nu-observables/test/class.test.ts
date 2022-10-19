@@ -1,4 +1,4 @@
-import { isObservable } from "nu-observables";
+import { getTestGraph, hasGraphFeature, isObservable } from "nu-observables";
 
 import { effect, enforceActions, Observable, isInAction } from "./utils";
 
@@ -44,31 +44,59 @@ if (Observable) {
 		expect(o.readValue()).toBe("prop");
 	});
 
-	test("object methods occur in an action ", () => {
-		enforceActions(true);
-		class C extends Observable {
-			valueA = 0;
-			valueB = 0;
+	if (hasGraphFeature(getTestGraph(), "isInAction")) {
+		test("object methods occur in an action ", () => {
+			enforceActions(true);
+			class C extends Observable {
+				valueA = 0;
+				valueB = 0;
 
-			inc() {
-				this.valueA++;
-				this.valueB++;
-				expect(isInAction()).toBe(true);
+				inc() {
+					this.valueA++;
+					this.valueB++;
+					expect(isInAction()).toBe(true);
+				}
 			}
-		}
 
-		const o = new C();
-		let count = 0;
+			const o = new C();
+			let count = 0;
 
-		effect(() => {
-			o.valueA;
-			o.valueB;
-			count++;
+			effect(() => {
+				o.valueA;
+				o.valueB;
+				count++;
+			});
+
+			o.inc();
+			expect(count).toBe(2);
 		});
 
-		o.inc();
-		expect(count).toBe(2);
-	});
+		test("object setters occur in an action", () => {
+			enforceActions(true);
+			class C extends Observable {
+				valueA = 0;
+				valueB = 0;
+
+				set values(v: number) {
+					this.valueA = v;
+					this.valueB = v;
+					expect(isInAction()).toBe(true);
+				}
+			}
+
+			const o = new C();
+			let count = 0;
+
+			effect(() => {
+				o.valueA;
+				o.valueB;
+				count++;
+			});
+
+			o.values = 1;
+			expect(count).toBe(2);
+		});
+	}
 
 	test("object methods are observable", () => {
 		class C extends Observable {
@@ -91,32 +119,6 @@ if (Observable) {
 		expect(count).toBe(2);
 	});
 
-	test("object setters occur in an action", () => {
-		enforceActions(true);
-		class C extends Observable {
-			valueA = 0;
-			valueB = 0;
-
-			set values(v: number) {
-				this.valueA = v;
-				this.valueB = v;
-				expect(isInAction()).toBe(true);
-			}
-		}
-
-		const o = new C();
-		let count = 0;
-
-		effect(() => {
-			o.valueA;
-			o.valueB;
-			count++;
-		});
-
-		o.values = 1;
-		expect(count).toBe(2);
-	});
-
 	test("object getters and setters on same property", () => {
 		enforceActions(true);
 		class C extends Observable {
@@ -130,7 +132,10 @@ if (Observable) {
 			set values(v: number) {
 				this.valueA = v;
 				this.valueB = v;
-				expect(isInAction()).toBe(true);
+
+				if (hasGraphFeature(getTestGraph(), "isInAction")) {
+					expect(isInAction()).toBe(true);
+				}
 			}
 		}
 

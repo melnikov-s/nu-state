@@ -323,7 +323,7 @@ test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 
 	expect(events).toEqual([undefined]);
 });
 
-test.only("[mobx-test] should react to key removal (unless reconfiguring to empty) - 2", () => {
+test("[mobx-test] should react to key removal (unless reconfiguring to empty) - 2", () => {
 	const events = [];
 	const x = object({
 		y: 1,

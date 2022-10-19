@@ -1,5 +1,6 @@
 {
   "name": "nu-reactive-graph",
+  "sideEffects": false,
   "version": "0.0.2",
   "repository": {
     "type": "git",

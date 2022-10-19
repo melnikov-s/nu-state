@@ -278,42 +278,6 @@ test("[mobx-test] observe collections", function () {
 	expect(entries).toEqual([["b", 3]]);
 });
 
-test("[mobx-test] cleanup", function () {
-	const x = map(new Map(Object.entries({ a: 1 })));
-
-	let aValue;
-	const disposer = effect(function () {
-		aValue = x.get("a");
-	});
-
-	const adm = getAdministration(x);
-
-	let observable = (adm as any).valuesMap.get("a");
-
-	expect(aValue).toBe(1);
-	expect(observable.observers.size).toBe(1);
-	expect((adm.hasMap.get("a") as any).observers.size).toBe(1);
-
-	expect(x.delete("a")).toBe(true);
-	expect(x.delete("not-existing")).toBe(false);
-
-	expect(aValue).toBe(undefined);
-	expect(observable.observers.size).toBe(0);
-	expect((adm.hasMap.get("a") as any).observers.size).toBe(1);
-
-	x.set("a", 2);
-	observable = (adm as any).valuesMap.get("a");
-
-	expect(aValue).toBe(2);
-	expect(observable.observers.size).toBe(1);
-	expect((adm.hasMap.get("a") as any).observers.size).toBe(1);
-
-	disposer();
-	expect(aValue).toBe(2);
-	expect(observable.observers.size).toBe(0);
-	expect((adm.hasMap as any).map.has("a")).toBe(false);
-});
-
 test("[mobx-test] unobserve before delete", function () {
 	const propValues = [];
 	const myObservable = observable({
