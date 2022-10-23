@@ -99,7 +99,7 @@ test("reportObserved on object (deep)", () => {
 	});
 	let count = 0;
 	effect(() => {
-		reportObserved(o);
+		reportObserved(o, { deep: true });
 		count++;
 	});
 
@@ -124,7 +124,7 @@ test("reportObserved on object (not deep)", () => {
 	});
 	let count = 0;
 	effect(() => {
-		reportObserved(o, { deep: false });
+		reportObserved(o);
 		count++;
 	});
 
@@ -146,7 +146,7 @@ test("reportObserved on object (deep + circular ref)", () => {
 
 	let count = 0;
 	effect(() => {
-		reportObserved(o);
+		reportObserved(o, { deep: true });
 		count++;
 	});
 
@@ -167,7 +167,7 @@ test("reportObserved on map (deep)", () => {
 	);
 	let count = 0;
 	effect(() => {
-		reportObserved(o);
+		reportObserved(o, { deep: true });
 		count++;
 	});
 
@@ -187,7 +187,7 @@ test("reportObserved on set (deep)", () => {
 	const o = observable(new Set([refA, refB].map(source)));
 	let count = 0;
 	effect(() => {
-		reportObserved(o);
+		reportObserved(o, { deep: true });
 		count++;
 	});
 
@@ -207,7 +207,7 @@ test("reportObserved on array (deep)", () => {
 	const o = observable([refA, refB].map(source));
 	let count = 0;
 	effect(() => {
-		reportObserved(o);
+		reportObserved(o, { deep: true });
 		count++;
 	});
 

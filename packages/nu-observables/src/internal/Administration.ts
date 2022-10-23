@@ -45,7 +45,7 @@ export class Administration<T extends object = object> {
 
 	protected reportObserveDeep(): void {}
 
-	reportObserved(deep = true): void {
+	reportObserved(deep = false): void {
 		if (!this.graph.isTracking()) {
 			return;
 		}
