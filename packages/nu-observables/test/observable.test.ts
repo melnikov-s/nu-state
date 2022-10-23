@@ -1,5 +1,4 @@
 import {
-	getInternalNode,
 	getObservable,
 	getObservableClassInstance,
 	ObjectAdministration,

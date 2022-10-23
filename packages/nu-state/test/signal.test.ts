@@ -1,7 +1,7 @@
 import { effect, reaction, computed, signal } from "../src";
 
 test("can read observable box value", () => {
-	const [getA, setA] = signal(1);
+	const [getA] = signal(1);
 	expect(getA()).toBe(1);
 });
 
@@ -100,7 +100,7 @@ test("[mobx-test] nested observables", () => {
 test("[mobx-test] multiple view dependencies", function () {
 	let bCalcs = 0;
 	let dCalcs = 0;
-	const [getA, setA] = signal(1);
+	const [getA] = signal(1);
 	const b = computed(function () {
 		bCalcs++;
 		return 2 * getA();

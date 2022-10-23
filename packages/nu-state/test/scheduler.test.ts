@@ -50,7 +50,6 @@ test("can create a reaction scheduler", () => {
 test("reaction scheduler passes in the last value into callback", () => {
 	const [get, set] = signal(0);
 	const scheduler = createTimeoutScheduler(0);
-	const count = 0;
 	let value = 0;
 	scheduler.reaction(
 		() => get(),
@@ -116,7 +115,7 @@ test("scheduled reactions occur in a batch", () => {
 test("listeners on the same scheduler trigger in a tight loop", () => {
 	let count = 0;
 	let asserted = true;
-	const createCustomScheduler = (timeout: number = 0): Scheduler =>
+	const createCustomScheduler = (): Scheduler =>
 		createScheduler((fn) =>
 			setTimeout(() => {
 				expect(count).toBe(0);

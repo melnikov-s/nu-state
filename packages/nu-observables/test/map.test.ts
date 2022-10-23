@@ -1,4 +1,4 @@
-import { getAdministration, isObservable } from "nu-observables";
+import { isObservable } from "nu-observables";
 import { effect, observable, reaction, source } from "./utils";
 
 const map = <K = any, V = any>(obj: Map<K, V> = new Map()): Map<K, V> => {
@@ -313,7 +313,7 @@ test("[mobx-test] has should not throw on invalid keys", function () {
 test("[mobx-test] map.clear should not be tracked", () => {
 	const x = map(new Map(Object.entries({ a: 3 })));
 	let c = 0;
-	const d = effect(() => {
+	effect(() => {
 		c++;
 		x.clear();
 	});
@@ -487,7 +487,7 @@ test("[mobx-test] map.size is reactive", () => {
 	const m = map();
 	const sizes = [];
 
-	const d = effect(() => {
+	effect(() => {
 		sizes.push(m.size);
 	});
 
@@ -502,7 +502,7 @@ test("[mobx-test] .forEach() subscribes for key changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
-		m.forEach((_) => {});
+		m.forEach(() => {});
 	});
 
 	m.set(1, 1);
@@ -518,6 +518,7 @@ test("[mobx-test] .keys() subscribes for key changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		for (const _ of m.keys()) {
 		}
 	});
@@ -535,6 +536,7 @@ test("[mobx-test] .values() subscribes for key changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		for (const _ of m.values()) {
 		}
 	});
@@ -552,6 +554,7 @@ test("[mobx-test] .entries() subscribes for key changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		for (const _ of m.entries()) {
 		}
 	});
@@ -575,6 +578,7 @@ test("[mobx-test] .entries() subscribes for value changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		for (const _ of m.entries()) {
 		}
 	});
@@ -598,6 +602,7 @@ test("[mobx-test] .values() subscribes for value changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		for (const _ of m.values()) {
 		}
 	});
@@ -621,7 +626,7 @@ test("[mobx-test] .forEach() subscribes for value changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
-		m.forEach((_) => {});
+		m.forEach(() => {});
 	});
 
 	m.set(1, 11);
@@ -643,6 +648,7 @@ test("[mobx-test] .keys() does NOT subscribe for value changes", () => {
 
 	effect(() => {
 		effectInvocationCount++;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		for (const _ of m.keys()) {
 		}
 	});
@@ -666,7 +672,7 @@ test("[mobx-test] noop mutations do NOT reportChanges", () => {
 
 	effect(() => {
 		effectInvocationCount++;
-		m.forEach((_) => {});
+		m.forEach(() => {});
 	});
 
 	m.set(1, 1);

@@ -51,12 +51,6 @@ export function getPropertyDescriptor(
 	return undefined;
 }
 
-export function getParentConstructor(
-	Ctor: Function | undefined
-): Function | undefined {
-	return Ctor?.prototype && Object.getPrototypeOf(Ctor.prototype)?.constructor;
-}
-
 export function isPlainObject(value: unknown): value is object {
 	if (value === null || typeof value !== "object") return false;
 	const proto = Object.getPrototypeOf(value);

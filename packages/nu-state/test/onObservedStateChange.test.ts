@@ -101,7 +101,7 @@ dateCase.label = "date";
 		testCase.get();
 		expect(count).toBe(2);
 		u();
-		const u4 = effect(() => {
+		effect(() => {
 			testCase.get();
 			testCase.get();
 		});
@@ -218,7 +218,7 @@ test("computed accepts a onBecomeObserved/onBecomeUnobserved callbacks", () => {
 	let countObserved = 0;
 	let countUnObserved = 0;
 
-	const [get, set] = signal(0);
+	const [get] = signal(0);
 	const c = computed(() => get());
 	onBecomeObserved(c, () => countObserved++);
 	onBecomeUnobserved(c, () => countUnObserved++);

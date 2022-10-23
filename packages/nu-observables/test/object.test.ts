@@ -466,7 +466,7 @@ test("[mobx-test] adding a different key doesn't trigger a pending key", () => {
 	const x = object({});
 	let counter = 0;
 
-	const d = effect(() => {
+	effect(() => {
 		x.x;
 		counter++;
 	});

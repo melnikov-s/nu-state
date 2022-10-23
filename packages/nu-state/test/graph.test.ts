@@ -122,7 +122,7 @@ test("(global) will prevent modification of observables outside of actions when 
 });
 
 test("enforce actions allows for initialization within a computed", () => {
-	const [get, set] = signal(0);
+	const [get] = signal(0);
 	enforceActions(true);
 
 	const c = computed(() => {

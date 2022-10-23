@@ -35,7 +35,7 @@ function runSamples(perfTest, resultsFn) {
 describe("nu-state tests", () => {
 	const { computed, observable, reaction, effect, runInAction, signal } = nu;
 
-	test("one observes ten thousand that observe one", function (done) {
+	test("one observes ten thousand that observe one", function () {
 		console.log("-------- nu-state results --------");
 		runSamples(
 			() => {
@@ -85,7 +85,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("five hundred properties that observe their sibling", function (done) {
+	test("five hundred properties that observe their sibling", function () {
 		runSamples(
 			() => {
 				const [a, setA] = signal(1);
@@ -127,7 +127,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("late dependency change", function (done) {
+	test("late dependency change", function () {
 		runSamples(
 			() => {
 				const values = [];
@@ -161,7 +161,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("lots of unused computables", function (done) {
+	test("lots of unused computables", function () {
 		runSamples(
 			() => {
 				const [a, setA] = signal(1);
@@ -204,11 +204,11 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("many unreferenced observables", function (done) {
+	test("many unreferenced observables", function () {
 		runSamples(
 			() => {
-				const [a, setA] = signal(3);
-				const [b, setB] = signal(6);
+				const [a] = signal(3);
+				const [b] = signal(6);
 				const [c, setC] = signal(7);
 				const d = computed(function () {
 					return a() * b() * c();
@@ -233,7 +233,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("computed memoization", function (done) {
+	test("computed memoization", function () {
 		runSamples(
 			() => {
 				const computeds = [];
@@ -252,7 +252,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("object observation (empty)", function (done) {
+	test("object observation (empty)", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -268,7 +268,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("array observation (empty)", function (done) {
+	test("array observation (empty)", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -284,7 +284,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("object observation", function (done) {
+	test("object observation", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -306,7 +306,7 @@ describe("nu-state tests", () => {
 		);
 	});
 
-	test("array observation", function (done) {
+	test("array observation", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -338,7 +338,7 @@ describe("nu-state tests", () => {
 describe("mobx tests", () => {
 	const { computed, observable, reaction, autorun, runInAction } = mobx;
 
-	test("one observes ten thousand that observe one", function (done) {
+	test("one observes ten thousand that observe one", function () {
 		console.log("-------- mobx results --------");
 		runSamples(
 			() => {
@@ -388,7 +388,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("five hundred properties that observe their sibling", function (done) {
+	test("five hundred properties that observe their sibling", function () {
 		runSamples(
 			() => {
 				const a = observable.box(1);
@@ -430,7 +430,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("late dependency change", function (done) {
+	test("late dependency change", function () {
 		runSamples(
 			() => {
 				const values = [];
@@ -464,7 +464,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("lots of unused computables", function (done) {
+	test("lots of unused computables", function () {
 		runSamples(
 			() => {
 				const a = observable.box(1);
@@ -507,7 +507,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("many unreferenced observables", function (done) {
+	test("many unreferenced observables", function () {
 		runSamples(
 			() => {
 				const a = observable.box(3);
@@ -536,7 +536,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("computed memoization", function (done) {
+	test("computed memoization", function () {
 		runSamples(
 			() => {
 				const computeds = [];
@@ -557,7 +557,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("object observation (empty)", function (done) {
+	test("object observation (empty)", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -573,7 +573,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("array observation (empty)", function (done) {
+	test("array observation (empty)", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -589,7 +589,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("object observation", function (done) {
+	test("object observation", function () {
 		runSamples(
 			() => {
 				const start = performance.now();
@@ -611,7 +611,7 @@ describe("mobx tests", () => {
 		);
 	});
 
-	test("array observation", function (done) {
+	test("array observation", function () {
 		runSamples(
 			() => {
 				const start = performance.now();

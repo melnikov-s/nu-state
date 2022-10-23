@@ -17,6 +17,7 @@ class NodeMap<
 		this.clearOnUnobserved = clearOnUnobserved;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	protected createNode(_initialValue?: unknown): GraphNode {
 		return {} as GraphNode;
 	}

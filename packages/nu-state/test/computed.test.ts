@@ -11,7 +11,7 @@ import {
 } from "../src";
 
 test("can return a computed value", () => {
-	const [get, set] = signal(1);
+	const [get] = signal(1);
 	const c = computed(() => get() * 2);
 	expect(c()).toEqual(2);
 });
@@ -27,7 +27,7 @@ test("can update automatically", () => {
 
 test("will run each time when not listened to", () => {
 	let count = 0;
-	const [get, set] = signal(1);
+	const [get] = signal(1);
 	const c = computed(() => {
 		count++;
 		return get();
@@ -43,7 +43,7 @@ test("will run each time when not listened to", () => {
 
 test("will only used cached value when listened to", () => {
 	let count = 0;
-	const [get, set] = signal(1);
+	const [get] = signal(1);
 	const c = computed(() => {
 		count++;
 		return get();
@@ -66,7 +66,7 @@ test("will only used cached value when listened to", () => {
 
 test("will only used cached value when listened to (deep)", () => {
 	let count = 0;
-	const [get, set] = signal(1);
+	const [get] = signal(1);
 	const c1 = computed(() => {
 		count++;
 		return get();
@@ -147,7 +147,7 @@ test("will not trigger reaction on same value", () => {
 });
 
 test("will not allow changing observable values within a computed", () => {
-	const [get1, set1] = signal(0);
+	const [get1] = signal(0);
 	const [get2, set2] = signal(1);
 	const c1 = computed(() => {
 		set2(3);
@@ -183,7 +183,7 @@ test("observable values only observed by the computed can change", () => {
 });
 
 test("will allow creating new observable values within a computed", () => {
-	const [get1, set1] = signal(0);
+	const [get1] = signal(0);
 	let get2, set2;
 	const c = computed(() => {
 		[get2, set2] = signal(0);
@@ -200,7 +200,7 @@ test("will allow creating new observable values within a computed", () => {
 
 test("will not react to observables created within the same computed", () => {
 	let count = 0;
-	const [get1, set1] = signal(2);
+	const [get1] = signal(2);
 	let get2, set2;
 	const c = computed(() => {
 		[get2, set2] = signal(3);
@@ -248,7 +248,7 @@ test("will throw if an observable created within a computed is re-used", () => {
 test("can use an observable that was created in another computed", () => {
 	let count = 0;
 	let result = 0;
-	const [get1, set1] = signal(2);
+	const [get1] = signal(2);
 	let get2, set2;
 	const c1 = computed(() => {
 		[get2, set2] = signal(3);
@@ -305,7 +305,7 @@ test("will clean up computed no longer in use", () => {
 	let count1 = 0;
 	let count2 = 0;
 	const [get1, set1] = signal(true);
-	const [get2, set2] = signal(1);
+	const [get2] = signal(1);
 	const c0 = computed(() => {
 		count2++;
 		get2();
@@ -460,7 +460,7 @@ test("will cache values mid action", () => {
 });
 
 test("will detect a cycle", () => {
-	const [get, set] = signal(1);
+	const [get] = signal(1);
 	const c1 = computed(() => get() + c2());
 	const c2 = computed(() => get() + c1());
 
@@ -469,7 +469,7 @@ test("will detect a cycle", () => {
 
 test("can recover from computed error", () => {
 	const [get1, set1] = signal(true);
-	const [get2, set2] = signal(2);
+	const [get2] = signal(2);
 	const c1 = computed(() => {
 		if (get1()) {
 			throw new Error("oops");
@@ -513,7 +513,7 @@ test("can create a computed inside of a computed", () => {
 
 test("non observed computed will cache values while it's being evaluated", () => {
 	let count = 0;
-	const [get, set] = signal(0);
+	const [get] = signal(0);
 	const c1 = computed(() => {
 		count++;
 		return get();
@@ -526,7 +526,7 @@ test("non observed computed will cache values while it's being evaluated", () =>
 });
 
 test("non observed will become dirty after it's evaluated", () => {
-	const [get, set] = signal(0);
+	const [get] = signal(0);
 	const c1 = computed(() => {
 		return get();
 	});
@@ -626,7 +626,7 @@ test("keep alive does not become unobserved", () => {
 
 test("can unobserve a keepAlive computed manually", () => {
 	let count = 0;
-	const [get, set] = signal(1);
+	const [get] = signal(1);
 	const c1 = computed(
 		() => {
 			count++;
