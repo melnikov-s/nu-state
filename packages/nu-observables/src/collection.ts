@@ -39,7 +39,7 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 	constructor(source: Collection<K, V>, graph: Graph) {
 		super(source, graph);
-		this.hasMap = new AtomMap(graph, true);
+		this.hasMap = new AtomMap(graph, this.atom);
 		this.valuesMap = new SignalMap(graph);
 		this.keysAtom = graph.createAtom();
 		this.isMap =

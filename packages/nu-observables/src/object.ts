@@ -76,7 +76,7 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 	constructor(source: T = {} as T, graph: Graph) {
 		super(source, graph);
 		this.keysAtom = graph.createAtom();
-		this.hasMap = new AtomMap(graph, true);
+		this.hasMap = new AtomMap(graph, this.atom);
 		this.valuesMap = new SignalMap(graph);
 		this.types = new Map();
 

@@ -9,12 +9,27 @@ class NodeMap<
 > {
 	private map: Map<unknown, GraphNode> | undefined;
 	private weakMap: WeakMap<object, GraphNode> | undefined;
-	private readonly clearOnUnobserved: boolean;
+	private cleanUpRegistered = false;
 	protected readonly graph: Graph;
 
-	constructor(graph: Graph, clearOnUnobserved: boolean = false) {
+	constructor(graph: Graph, private unobserveAtom?: AtomNode) {
 		this.graph = graph;
-		this.clearOnUnobserved = clearOnUnobserved;
+	}
+
+	private registerCleanup(): void {
+		if (this.unobserveAtom) {
+			this.cleanUpRegistered = true;
+			const unsub = this.graph.onObservedStateChange(
+				this.unobserveAtom,
+				(observing) => {
+					if (!observing) {
+						this.map?.clear();
+						this.cleanUpRegistered = false;
+						unsub();
+					}
+				}
+			);
+		}
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -50,13 +65,9 @@ class NodeMap<
 				this.map = this.map ?? new Map();
 
 				entry = this.createNode(value);
-				if (this.clearOnUnobserved) {
-					const unsub = this.graph.onObservedStateChange(entry, (observing) => {
-						if (!observing) {
-							this.map?.delete(key);
-							unsub();
-						}
-					});
+
+				if (!this.cleanUpRegistered) {
+					this.registerCleanup();
 				}
 
 				this.map.set(key, entry);
