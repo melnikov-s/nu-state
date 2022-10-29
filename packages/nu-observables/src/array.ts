@@ -29,6 +29,9 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 				return adm.get(parseInt(name));
 			}
 
+			const arrayMethods = (adm.constructor as typeof ArrayAdministration)
+				.methods;
+
 			if (arrayMethods.hasOwnProperty(name)) {
 				return arrayMethods[name as keyof typeof arrayMethods];
 			}
@@ -51,6 +54,110 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 
 			return true;
 		},
+	};
+
+	static methods: Partial<{
+		[K in keyof typeof Array.prototype as typeof Array.prototype[K] extends Function
+			? K
+			: never]: typeof Array.prototype[K];
+	}> = {
+		fill<T>(
+			this: T[],
+			value: T,
+			start?: number | undefined,
+			end?: number | undefined
+		): T[] {
+			const adm = getAdministration(this);
+			const oldLength = adm.source.length;
+			adm.source.fill(value, start, end);
+			adm.onArrayChanged(oldLength !== adm.source.length, start, end);
+
+			return this;
+		},
+
+		splice<T>(
+			this: T[],
+			index: number,
+			deleteCount?: number,
+			...newItems: T[]
+		): T[] {
+			const adm = getAdministration(this);
+			switch (arguments.length) {
+				case 0:
+					return [];
+				case 1:
+					return adm.spliceWithArray(index);
+				case 2:
+					return adm.spliceWithArray(index, deleteCount);
+			}
+			return adm.spliceWithArray(index, deleteCount, newItems);
+		},
+
+		push<T>(this: T[], ...items: T[]): number {
+			const adm = getAdministration(this);
+			adm.spliceWithArray(adm.source.length, 0, items);
+			return adm.source.length;
+		},
+
+		pop<T>(this: T[]): T {
+			return this.splice(
+				Math.max(getAdministration(this).source.length - 1, 0),
+				1
+			)[0];
+		},
+
+		shift<T>(this: T[]): T {
+			return this.splice(0, 1)[0];
+		},
+
+		unshift<T>(this: T[], ...items: T[]): number {
+			const adm = getAdministration(this);
+			adm.spliceWithArray(0, 0, items);
+			return adm.source.length;
+		},
+
+		reverse<T>(this: T[]): T[] {
+			const adm = getAdministration(this);
+
+			adm.source.reverse();
+
+			adm.onArrayChanged(false, 0, adm.source.length);
+
+			return this;
+		},
+
+		sort<T>(this: T[], compareFn?: ((a: T, b: T) => number) | undefined): T[] {
+			const adm = getAdministration(this);
+			adm.onArrayChanged();
+
+			adm.source.sort(
+				compareFn &&
+					((a, b) =>
+						compareFn(getObservable(a, adm.graph), getObservable(b, adm.graph)))
+			);
+
+			return this;
+		},
+		join: createStringMethod("join"),
+		toString: createStringMethod("toString"),
+		toLocaleString: createStringMethod("toLocaleString"),
+		indexOf: createSearchMethod("indexOf"),
+		lastIndexOf: createSearchMethod("lastIndexOf"),
+		includes: createSearchMethod("includes"),
+		slice: createCopyMethod("slice"),
+		concat: createCopyMethod("concat"),
+		flat: createCopyMethod("flat"),
+		copyWithin: createCopyMethod("copyWithin"),
+		every: createMapMethod("every"),
+		forEach: createMapMethod("forEach"),
+		map: createMapMethod("map"),
+		flatMap: createMapMethod("flatMap"),
+		findIndex: createMapMethod("findIndex"),
+		some: createMapMethod("some"),
+		filter: createFilterMethod("filter"),
+		find: createFilterMethod("find"),
+		reduce: createReduceMethod("reduce"),
+		reduceRight: createReduceMethod("reduceRight"),
 	};
 
 	constructor(source: T[] = [], graph: Graph) {
@@ -193,159 +300,70 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 	}
 }
 
-const arrayMethods: any = {
-	fill<T>(
-		this: T[],
-		value: T,
-		start?: number | undefined,
-		end?: number | undefined
-	): T[] {
+function createMethod(method: string, func: Function): any {
+	if (Array.prototype.hasOwnProperty(method)) {
+		return func;
+	}
+
+	return undefined;
+}
+
+function createStringMethod(method: string): any {
+	return createMethod(method, function (this: unknown[]): unknown {
 		const adm = getAdministration(this);
-		const oldLength = adm.source.length;
-		adm.source.fill(value, start, end);
-		adm.onArrayChanged(oldLength !== adm.source.length, start, end);
+		adm.reportObserved(false);
+		const sourceArr = getSource(this);
 
-		return this;
-	},
+		return sourceArr[method].apply(sourceArr, arguments);
+	});
+}
 
-	splice<T>(
-		this: T[],
-		index: number,
-		deleteCount?: number,
-		...newItems: T[]
-	): T[] {
+function createSearchMethod(method: string): any {
+	return createMethod(method, function (this: unknown[]): unknown {
 		const adm = getAdministration(this);
-		switch (arguments.length) {
-			case 0:
-				return [];
-			case 1:
-				return adm.spliceWithArray(index);
-			case 2:
-				return adm.spliceWithArray(index, deleteCount);
-		}
-		return adm.spliceWithArray(index, deleteCount, newItems);
-	},
+		adm.reportObserved(false);
+		const source = getSource(arguments[0]);
+		const sourceArr = getSource(this);
+		const args = arguments.length === 1 ? [source] : [source, arguments[1]];
 
-	push<T>(this: T[], ...items: T[]): number {
+		return adm.source[method].apply(sourceArr, args);
+	});
+}
+function createCopyMethod(method: string): any {
+	return createMethod(method, function (this: unknown[]): unknown {
 		const adm = getAdministration(this);
-		adm.spliceWithArray(adm.source.length, 0, items);
-		return adm.source.length;
-	},
+		adm.reportObserved(false);
 
-	pop<T>(this: T[]): T {
-		return this.splice(
-			Math.max(getAdministration(this).source.length - 1, 0),
-			1
-		)[0];
-	},
-
-	shift<T>(this: T[]): T {
-		return this.splice(0, 1)[0];
-	},
-
-	unshift<T>(this: T[], ...items: T[]): number {
-		const adm = getAdministration(this);
-		adm.spliceWithArray(0, 0, items);
-		return adm.source.length;
-	},
-
-	reverse<T>(this: T[]): T[] {
-		const adm = getAdministration(this);
-
-		adm.source.reverse();
-
-		adm.onArrayChanged(false, 0, adm.source.length);
-
-		return this;
-	},
-
-	sort<T>(this: T[], compareFn?: ((a: T, b: T) => number) | undefined): T[] {
-		const adm = getAdministration(this);
-		adm.onArrayChanged();
-
-		adm.source.sort(
-			compareFn &&
-				((a, b) =>
-					compareFn(getObservable(a, adm.graph), getObservable(b, adm.graph)))
+		return getObservable(
+			adm.source[method].apply(adm.source, arguments),
+			adm.graph
 		);
-
-		return this;
-	},
-};
-
-["join", "toString", "toLocaleString"].forEach((method) => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function (this: unknown[]): unknown {
-			const adm = getAdministration(this);
-			adm.reportObserved(false);
-			const sourceArr = getSource(this);
-
-			return sourceArr[method].apply(sourceArr, arguments);
-		};
-	}
-});
-
-["indexOf", "includes", "lastIndexOf"].forEach((method) => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function (this: unknown[]): unknown {
-			const adm = getAdministration(this);
-			adm.reportObserved(false);
-			const source = getSource(arguments[0]);
-			const sourceArr = getSource(this);
-			const args = arguments.length === 1 ? [source] : [source, arguments[1]];
-
-			return adm.source[method].apply(sourceArr, args);
-		};
-	}
-});
-
-["slice", "concat", "flat", "copyWithin"].forEach((method) => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function (this: unknown[]): unknown {
+	});
+}
+function createMapMethod(method: string): any {
+	return createMethod(
+		method,
+		function (this: unknown[], callback: Function, thisArg: unknown): unknown {
 			const adm = getAdministration(this);
 			adm.reportObserved(false);
 
-			return getObservable(
-				adm.source[method].apply(adm.source, arguments),
-				adm.graph
-			);
-		};
-	}
-});
-
-["every", "forEach", "map", "flatMap", "findIndex", "some"].forEach(
-	(method) => {
-		if (Array.prototype.hasOwnProperty(method)) {
-			arrayMethods[method] = function (
-				this: unknown[],
-				callback: Function,
-				thisArg: unknown
-			): unknown {
-				const adm = getAdministration(this);
-				adm.reportObserved(false);
-
-				return adm.source[method]((element: unknown, index: number) => {
-					return callback.call(
-						thisArg,
-						element && typeof element === "object"
-							? getObservable(element, adm.graph)
-							: element,
-						index,
-						this
-					);
-				});
-			};
+			return adm.source[method]((element: unknown, index: number) => {
+				return callback.call(
+					thisArg,
+					element && typeof element === "object"
+						? getObservable(element, adm.graph)
+						: element,
+					index,
+					this
+				);
+			});
 		}
-	}
-);
-
-["filter", "find"].forEach((method) => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function (
-			this: unknown[],
-			callback: Function,
-			thisArg: unknown
-		): unknown {
+	);
+}
+function createFilterMethod(method: string): any {
+	return createMethod(
+		method,
+		function (this: unknown[], callback: Function, thisArg: unknown): unknown {
 			const adm = getAdministration(this);
 			adm.reportObserved(false);
 
@@ -362,30 +380,27 @@ const arrayMethods: any = {
 				}),
 				adm.graph
 			);
-		};
-	}
-});
+		}
+	);
+}
+function createReduceMethod(method: string): any {
+	return createMethod(method, function (this: unknown[]): unknown {
+		const adm = getAdministration(this);
+		adm.reportObserved(false);
 
-["reduce", "reduceRight"].forEach((method) => {
-	if (Array.prototype.hasOwnProperty(method)) {
-		arrayMethods[method] = function (this: unknown[]): unknown {
-			const adm = getAdministration(this);
-			adm.reportObserved(false);
-
-			const callback = arguments[0];
-			arguments[0] = (
-				accumulator: unknown,
-				currentValue: unknown,
-				index: number
-			) => {
-				return callback(
-					accumulator,
-					getObservable(currentValue, adm.graph),
-					index,
-					this
-				);
-			};
-			return adm.source[method].apply(adm.source, arguments);
+		const callback = arguments[0];
+		arguments[0] = (
+			accumulator: unknown,
+			currentValue: unknown,
+			index: number
+		) => {
+			return callback(
+				accumulator,
+				getObservable(currentValue, adm.graph),
+				index,
+				this
+			);
 		};
-	}
-});
+		return adm.source[method].apply(adm.source, arguments);
+	});
+}

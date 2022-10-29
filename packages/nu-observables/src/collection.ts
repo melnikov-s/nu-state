@@ -28,6 +28,9 @@ export class CollectionAdministration<K, V = K> extends Administration<
 			}
 
 			const val = adm.source[name];
+			const collectionMethods = (
+				adm.constructor as typeof CollectionAdministration
+			).methods;
 
 			if (collectionMethods.hasOwnProperty(name) && typeof val === "function") {
 				return collectionMethods[name];
@@ -35,6 +38,20 @@ export class CollectionAdministration<K, V = K> extends Administration<
 
 			return val;
 		},
+	};
+
+	static methods = {
+		clear: createMethod("clear"),
+		forEach: createMethod("forEach"),
+		has: createMethod("has"),
+		add: createMethod("add"),
+		set: createMethod("set"),
+		get: createMethod("get"),
+		delete: createMethod("delete"),
+		entries: createMethod("entries"),
+		keys: createMethod("keys"),
+		values: createMethod("values"),
+		[Symbol.iterator]: createMethod(Symbol.iterator),
 	};
 
 	constructor(source: Collection<K, V>, graph: Graph) {
@@ -266,23 +283,9 @@ export class CollectionAdministration<K, V = K> extends Administration<
 	[Symbol.toStringTag]: string = "Set";
 }
 
-const collectionMethods: any = {};
-
-[
-	"clear",
-	"forEach",
-	"has",
-	"add",
-	"set",
-	"get",
-	"delete",
-	"entries",
-	"keys",
-	"values",
-	Symbol.iterator,
-].forEach((method) => {
-	collectionMethods[method] = function (): unknown {
+function createMethod(method: PropertyKey) {
+	return function (this: any): unknown {
 		const adm = getAdministration(this);
 		return adm[method].apply(adm, arguments);
 	};
-});
+}
