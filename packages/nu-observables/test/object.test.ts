@@ -19,6 +19,15 @@ test("observable values do not get stored on the original target", () => {
 	expect(target.prop).toBe(oTarget);
 });
 
+test("does not overwrite observable values", () => {
+	const o1 = observable({});
+
+	const o = object({ o1 });
+	o.o1 = o1;
+
+	expect(source(o).o1).toBe(o1);
+});
+
 test("observable values do not get stored on the original target (Object.assign)", () => {
 	const target = { prop: undefined };
 	const o = object(target);

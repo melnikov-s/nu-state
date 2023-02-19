@@ -10,5 +10,5 @@ export function observable<T extends object>(object: T): T {
 		);
 	}
 
-	return getObservable(object, getGraph(), false);
+	return getObservable(object, getGraph());
 }

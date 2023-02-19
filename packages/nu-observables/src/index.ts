@@ -10,6 +10,7 @@ export {
 	getObservableClassInstance,
 	getInternalNode,
 	setAdministrationType,
+	createObservableWithCustomAdministration,
 } from "./internal/lookup";
 export { ArrayAdministration } from "./array";
 export { CollectionAdministration } from "./collection";

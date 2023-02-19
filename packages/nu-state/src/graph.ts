@@ -13,7 +13,6 @@ import {
 	batch,
 	runInAction,
 	isTracking,
-	enforceActions,
 	isInAction,
 } from "nu-reactive-graph";
 import { effect } from "./effect";
@@ -52,7 +51,6 @@ export function getGraph(): Graph {
 			},
 			isTracking,
 			onObservedStateChange,
-			enforceActions,
 			effect,
 			isInAction,
 		}));

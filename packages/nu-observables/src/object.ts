@@ -3,9 +3,8 @@ import {
 	getObservable,
 	getSource,
 	getAction,
-	throwObservablesOnSource,
-	isObservable,
 	getAdministration,
+	isObservable,
 } from "./internal/lookup";
 import {
 	isPropertyKey,
@@ -79,15 +78,6 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		this.hasMap = new AtomMap(graph, this.atom);
 		this.valuesMap = new SignalMap(graph);
 		this.types = new Map();
-
-		if (process.env.NODE_ENV !== "production") {
-			Object.getOwnPropertyNames(source).forEach((name) => {
-				const type = this.getType(name as keyof T);
-				if (type === "observable" && isObservable(source[name])) {
-					throwObservablesOnSource();
-				}
-			});
-		}
 	}
 
 	private get(key: PropertyKey): T[keyof T] {
@@ -232,7 +222,12 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getSource(newValue);
 
-		if (!had || oldValue !== targetValue) {
+		if (
+			!had ||
+			(isObservable(oldValue)
+				? oldValue !== newValue
+				: oldValue !== targetValue)
+		) {
 			this.set(key, targetValue);
 
 			this.graph.batch(() => {

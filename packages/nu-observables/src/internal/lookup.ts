@@ -79,12 +79,6 @@ export function getAction<T extends Function>(fn: T, graph: Graph): T {
 	return action as T;
 }
 
-export function throwObservablesOnSource(): never {
-	throw new Error(
-		"observables on source objects are not allowed! Be sure to use `source(observable)` to convert to source object before creating a new observable"
-	);
-}
-
 export function getObservableClassInstance<T extends object>(
 	value: T,
 	graph: Graph
@@ -105,11 +99,18 @@ export function getObservableIfExists<T>(value: T): T | undefined {
 	return undefined;
 }
 
-export function getObservable<T>(
+export function createObservableWithCustomAdministration<T>(
 	value: T,
 	graph: Graph,
-	ensureSource: boolean = true
+	Adm: new (obj: any, graph: Graph) => Administration
 ): T {
+	const adm = new Adm(value, graph);
+	administrationMap.set(adm.proxy, adm);
+	administrationMap.set(adm.source, adm);
+	return adm.proxy as unknown as T;
+}
+
+export function getObservable<T>(value: T, graph: Graph): T {
 	if (!value) {
 		return value;
 	}
@@ -122,11 +123,6 @@ export function getObservable<T>(
 			throw new Error("observables can only exists on a single graph");
 		}
 
-		if (process.env.NODE_ENV !== "production") {
-			if (ensureSource && adm.proxy === value) {
-				throwObservablesOnSource();
-			}
-		}
 		return adm.proxy as unknown as T;
 	}
 
@@ -161,7 +157,9 @@ export function getObservable<T>(
 }
 
 export function isObservable(obj: unknown): boolean {
-	const adm = getAdministration(obj as object);
+	if (!obj || typeof obj !== "object") return false;
+
+	const adm = getAdministration(obj);
 	return !!(adm && adm.proxy === obj);
 }
 

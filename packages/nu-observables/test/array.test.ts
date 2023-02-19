@@ -21,6 +21,15 @@ test("iteration returns observable results", () => {
 	expect(count).toBe(3);
 });
 
+test("does not overwrite observable values", () => {
+	const o1 = observable({});
+
+	const o = array([o1]);
+	o[0] = o1;
+
+	expect(source(o)[0]).toBe(o1);
+});
+
 test("sort parameters are observable", () => {
 	let count = 0;
 	const arr = array([{}, {}]);
@@ -43,6 +52,7 @@ test("sort parameters are observable", () => {
 		Object.freeze(frozen);
 		const arrA = array([{}, lookup, {}, {}, lookup, frozen]);
 		const arrB = array([{}, lookup, frozen]);
+		const arrC = array([observedLookup]);
 
 		effect(() => {
 			count++;
@@ -52,6 +62,8 @@ test("sort parameters are observable", () => {
 			expect(arrB[method](observedLookup)).not.toBe(negativeValue);
 			expect(arrA[method](frozen)).not.toBe(negativeValue);
 			expect(arrB[method](frozen)).not.toBe(negativeValue);
+			expect(arrC[method](lookup)).toBe(negativeValue);
+			expect(arrC[method](observedLookup)).not.toBe(negativeValue);
 		});
 		expect(count).toBe(1);
 		arrA.push({});

@@ -4,7 +4,6 @@ import {
 	getObservable,
 	getSource,
 	isObservable,
-	throwObservablesOnSource,
 } from "./internal/lookup";
 import { Administration } from "./internal/Administration";
 import { SignalMap } from "./internal/NodeMap";
@@ -164,14 +163,6 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 		super(source, graph);
 		this.valuesMap = new SignalMap(this.graph);
 		this.keysAtom = graph.createAtom();
-
-		if (process.env.NODE_ENV !== "production") {
-			for (let i = 0; i < this.source.length; i++) {
-				if (isObservable(this.source[i])) {
-					throwObservablesOnSource();
-				}
-			}
-		}
 	}
 
 	protected reportObserveDeep(): void {
@@ -206,7 +197,9 @@ export class ArrayAdministration<T> extends Administration<T[]> {
 			// update at index in range
 			const oldValue = values[index];
 
-			const changed = targetValue !== oldValue;
+			const changed = isObservable(oldValue)
+				? newValue !== oldValue
+				: targetValue !== oldValue;
 			if (changed) {
 				values[index] = targetValue;
 				this.onArrayChanged(false, index, 1);
@@ -321,14 +314,30 @@ function createStringMethod(method: string): any {
 function createSearchMethod(method: string): any {
 	return createMethod(method, function (this: unknown[]): unknown {
 		const adm = getAdministration(this);
+
 		adm.reportObserved(false);
-		const source = getSource(arguments[0]);
+		const target = arguments[0];
+		const source = getSource(target);
 		const sourceArr = getSource(this);
 		const args = arguments.length === 1 ? [source] : [source, arguments[1]];
 
-		return adm.source[method].apply(sourceArr, args);
+		const result = adm.source[method].apply(sourceArr, args);
+
+		// If we're searching for an observable and couldn't find its source on the source array
+		// it might still exists as an observable on the source array. Look for that too
+		if (
+			isObservable(target) && typeof result === "boolean"
+				? !result
+				: result === -1
+		) {
+			const args = arguments.length === 1 ? [target] : [target, arguments[1]];
+			return adm.source[method].apply(sourceArr, args);
+		}
+
+		return result;
 	});
 }
+
 function createCopyMethod(method: string): any {
 	return createMethod(method, function (this: unknown[]): unknown {
 		const adm = getAdministration(this);

@@ -110,6 +110,44 @@ test("map equality for observed and target objects", () => {
 	expect(m.size).toBe(0);
 });
 
+test("map can be initialized with observable values", () => {
+	const o1 = observable({});
+	const o2 = observable({});
+	const o3 = {};
+
+	const m = map(
+		new Map([
+			[o1, o1],
+			[o2, o2],
+			[o3, o3],
+		])
+	);
+	expect(m.has(o1)).toBe(true);
+	expect(m.has(source(o2))).not.toBe(true);
+	expect(m.has(o1)).toBe(true);
+	expect(m.has(o2)).toBe(true);
+	m.set(o2, o2);
+	expect(m.size).toBe(3);
+	expect(m.has(observable(o3))).toBe(true);
+	m.delete(observable(o3));
+	expect(m.size).toBe(2);
+	m.delete(source(o1));
+	expect(m.size).toBe(2);
+	m.delete(o1);
+	expect(m.size).toBe(1);
+	m.delete(o2);
+	expect(m.size).toBe(0);
+});
+
+test("does not overwrite observable values", () => {
+	const o1 = observable({});
+
+	const m = map(new Map([[o1, o1]]));
+	expect(source(m).get(o1)).toBe(o1);
+	m.set(o1, o1);
+	expect(source(m).get(o1)).toBe(o1);
+});
+
 test("instanceof Map", () => {
 	const m = map();
 	expect(m instanceof Map).toBe(true);

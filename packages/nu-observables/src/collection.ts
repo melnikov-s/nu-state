@@ -4,7 +4,6 @@ import {
 	getSource,
 	getAdministration,
 	isObservable,
-	throwObservablesOnSource,
 } from "./internal/lookup";
 import { Administration } from "./internal/Administration";
 import { AtomMap, SignalMap } from "./internal/NodeMap";
@@ -62,21 +61,10 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		this.isMap =
 			typeof (source as Map<K, V>).set === "function" &&
 			typeof (source as Map<K, V>).get === "function";
-
-		if (process.env.NODE_ENV !== "production") {
-			this.source.forEach?.((value, key) => {
-				if (isObservable(value)) {
-					throwObservablesOnSource();
-				}
-				if (this.isMap && isObservable(key)) {
-					throwObservablesOnSource();
-				}
-			});
-		}
 	}
 
 	private hasEntry(key: K): boolean {
-		return !!this.source.has(getSource(key));
+		return this.source.has(getSource(key)) || this.source.has(key);
 	}
 
 	private onCollectionChange(key: K): void {
@@ -235,7 +223,11 @@ export class CollectionAdministration<K, V = K> extends Administration<
 		const oldValue: V | undefined =
 			sourceMap.get(targetKey) ?? sourceMap.get(key);
 
-		if (!hasKey || oldValue !== targetValue) {
+		if (
+			!hasKey || isObservable(oldValue)
+				? oldValue !== value
+				: oldValue !== targetValue
+		) {
 			this.graph.batch(() => {
 				this.flushChange();
 				if (sourceMap.has(key)) {

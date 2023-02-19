@@ -126,6 +126,39 @@ test("set equality for observed and target objects", () => {
 	expect(s.size).toBe(0);
 });
 
+test("set can be initialized with observable values", () => {
+	const o1 = observable({});
+	const o2 = observable({});
+	const o3 = {};
+
+	const s = set(new Set([o1, o2, o3]));
+	expect(s.has(o1)).toBe(true);
+	expect(s.has(source(o2))).not.toBe(true);
+	expect(s.has(o3)).toBe(true);
+	s.add(o1);
+	expect(s.size).toBe(3);
+	s.add(o2);
+	expect(s.size).toBe(3);
+	expect(s.has(o1)).toBe(true);
+	expect(s.has(o2)).toBe(true);
+	expect(s.has(o3)).toBe(true);
+	expect(s.has(observable(o3))).toBe(true);
+	s.add(observable(o3));
+	expect(s.size).toBe(3);
+	s.add(source(o1));
+	expect(s.size).toBe(4);
+	s.delete(source(o1));
+	expect(s.size).toBe(3);
+	s.delete(observable(o3));
+	expect(s.size).toBe(2);
+	s.delete(source(o1));
+	expect(s.size).toBe(2);
+	s.delete(o1);
+	expect(s.size).toBe(1);
+	s.delete(o2);
+	expect(s.size).toBe(0);
+});
+
 test("instanceof Set", () => {
 	const s = set();
 	expect(s instanceof Set).toBe(true);
