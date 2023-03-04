@@ -782,6 +782,29 @@ test("can manually clear computed cached value", () => {
 	expect(count).toBe(3);
 });
 
+test("dynamic computed nodes do not get re-ran", () => {
+	let count = 0;
+	const o = observable({ value: true });
+	const c = computed(() => {
+		count++;
+		return o.value;
+	});
+
+	effect(() => {
+		if (o.value) {
+			return c();
+		}
+
+		return false;
+	});
+
+	expect(count).toBe(1);
+	o.value = false;
+	expect(count).toBe(1);
+	o.value = true;
+	expect(count).toBe(2);
+});
+
 test("[mobx-test] computed values believe NaN === NaN", () => {
 	const [getA, setA] = signal(2);
 	const [getB, setB] = signal(3);

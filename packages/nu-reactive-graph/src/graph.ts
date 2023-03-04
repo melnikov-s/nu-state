@@ -5,6 +5,7 @@ import {
 	ObservableNode,
 	ObserverNode,
 	Node,
+	Atom,
 } from "./types";
 
 let inBatch = false;
@@ -13,6 +14,7 @@ let inAction = false;
 let callDepth = 0;
 let actionCallDepth = 0;
 let taskError = false;
+const propagatedObservables: Set<Atom<unknown>> = new Set();
 const changedObservables: Map<Node, unknown> = new Map();
 const invokedComputed: Set<Computed<unknown>> = new Set();
 const potentialUnObserved: Set<ObservableNode> = new Set();
@@ -44,20 +46,18 @@ function hasChanged(node: Node): boolean {
 
 	switch (node.nodeType) {
 		case nodeTypes.atom:
-			changed =
-				changedObservables.has(node) &&
-				!node.equals(changedObservables.get(node));
+			changed = !node.equals(changedObservables.get(node));
+			if (!changed) {
+				changedObservables.delete(node);
+			}
 			break;
 		case nodeTypes.computed:
-			if (!changedObservables.has(node)) {
-				return false;
-			}
-
 			node.observing.forEach((o) => {
-				changed = changed || hasChanged(o);
+				changed = changed || (changedObservables.has(o) && hasChanged(o));
 			});
 
 			if (!changed) {
+				changedObservables.delete(node);
 				potentialStale.delete(node);
 			}
 
@@ -65,7 +65,7 @@ function hasChanged(node: Node): boolean {
 			break;
 		case nodeTypes.listener:
 			node.observing.forEach((o) => {
-				changed = changed || hasChanged(o);
+				changed = changed || (changedObservables.has(o) && hasChanged(o));
 			});
 			break;
 	}
@@ -234,7 +234,7 @@ export function remove(
 // register an observable change which will propagate the change to all
 // dependencies, invaliding computed nodes and queuing up listener nodes
 // for execution.
-export function reportChanged(node: ObservableNode, oldValue?: unknown): void {
+export function reportChanged(node: Atom<unknown>, oldValue?: unknown): void {
 	const top = topOfRunStack();
 	if (runStack.length && !!top && isObserved(node)) {
 		// we ignore the change if the change occurred within the same reaction in
@@ -249,20 +249,24 @@ export function reportChanged(node: ObservableNode, oldValue?: unknown): void {
 		);
 	}
 
-	if (actionsEnforced && !inAction) {
-		throw new Error(
-			"strict actions are enforced. Attempted to modify an observed observable outside of an action"
-		);
+	if (!inAction) {
+		if (actionsEnforced) {
+			throw new Error(
+				"strict actions are enforced. Attempted to modify an observed observable outside of an action"
+			);
+		} else {
+			// if we're not currently in a action start a new one
+			try {
+				startAction();
+				reportChanged(node, oldValue);
+			} finally {
+				endAction();
+			}
+			return;
+		}
 	}
 
-	// if we're not currently in a action start a new one
-	if (!inAction) {
-		try {
-			startAction();
-			reportChanged(node, oldValue);
-		} finally {
-			endAction();
-		}
+	if (propagatedObservables.has(node)) {
 		return;
 	}
 
@@ -271,6 +275,8 @@ export function reportChanged(node: ObservableNode, oldValue?: unknown): void {
 	if (!changedObservables.has(node)) {
 		changedObservables.set(node, oldValue);
 	}
+
+	propagatedObservables.add(node);
 
 	// propagate the change down the graph until we reach the listeners
 	propagateChange(node);
@@ -283,6 +289,7 @@ export function reportObserved(node: ObservableNode): void {
 	// we only care about an observable being accessed if there's
 	// currently an observer running
 	if (top && !top.observing.has(node)) {
+		propagatedObservables.delete(node as Atom);
 		// if this is the first time an observable is being observed ...
 		if (!isObserved(node)) {
 			notifyObservedState(node, true);
@@ -466,6 +473,7 @@ export function endBatch(): void {
 			inAction = false;
 			queuedListeners.clear();
 			changedObservables.clear();
+			propagatedObservables.clear();
 
 			// All computed nodes marked potentially stale are now confirmed stale
 			// need to reset them
