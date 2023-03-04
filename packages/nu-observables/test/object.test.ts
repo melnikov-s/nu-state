@@ -1,6 +1,14 @@
 import { isObservable } from "nu-observables";
 
-import { effect, reaction, observable, runInAction, source } from "./utils";
+import {
+	effect,
+	reaction,
+	observable,
+	runInAction,
+	source,
+	isInAction,
+	reportChanged,
+} from "./utils";
 
 function object<T extends object>(obj: T = {} as T): Record<string, any> {
 	return observable(obj);
@@ -136,6 +144,77 @@ test("frozen objects are not observed", () => {
 	const o = object({ toBeFrozen: {} });
 	Object.freeze(source(o).toBeFrozen);
 	expect(isObservable(o.toBeFrozen)).toBe(false);
+});
+
+test("action can turn into observable", () => {
+	let count = 0;
+	const o = object({ v() {} });
+
+	effect(() => {
+		count++;
+		return o.v;
+	});
+
+	o.v = 1;
+	expect(count).toBe(2);
+	o.v = 2;
+	expect(count).toBe(3);
+});
+
+test("observable can turn into action", () => {
+	let count = 0;
+	const o = object({ v: 0 });
+	const o2 = object({ v: 0 });
+
+	effect(() => {
+		count++;
+		return o.v + o2.v;
+	});
+
+	o.v = function () {
+		expect(isInAction()).toBe(true);
+		o2.v++;
+	};
+
+	expect(count).toBe(2);
+	o.v();
+	expect(count).toBe(3);
+});
+
+test("action can turn into observable (source)", () => {
+	let count = 0;
+	const o = object({ v() {} });
+
+	effect(() => {
+		count++;
+		return o.v;
+	});
+
+	source(o).v = 1;
+	reportChanged(o);
+	expect(count).toBe(2);
+});
+
+test("observable can turn into action (source)", () => {
+	let count = 0;
+	const o = object({ v: 0 });
+	const o2 = object({ v: 0 });
+
+	effect(() => {
+		count++;
+		return o.v + o2.v;
+	});
+
+	source(o).v = function () {
+		expect(isInAction()).toBe(true);
+		o2.v++;
+	};
+
+	reportChanged(o);
+
+	expect(count).toBe(2);
+	o.v();
+	expect(count).toBe(3);
 });
 
 test("[mobx-test] keys should be observable when extending", () => {

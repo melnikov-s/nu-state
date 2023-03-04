@@ -136,6 +136,11 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		});
 	}
 
+	reportChanged(): void {
+		this.types.clear();
+		super.reportChanged();
+	}
+
 	getNode(key?: keyof T): unknown {
 		if (!key) {
 			return this.atom;
@@ -190,6 +195,8 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 				if (key in this.source) {
 					this.valuesMap.reportObserved(key, this.source[key]);
 				} else if (this.graph.isTracking()) {
+					//has map might be an arbitrary key and reportObserved creates an atom for each one
+					// we don't need to do this if we're not in a reaction
 					this.hasMap.reportObserved(key);
 				}
 
@@ -221,6 +228,13 @@ export class ObjectAdministration<T extends object> extends Administration<T> {
 		const had = key in this.source;
 		const oldValue: T[keyof T] = this.get(key);
 		const targetValue = getSource(newValue);
+
+		if (
+			(type === "action" && typeof newValue !== "function") ||
+			(type === "observable" && typeof newValue === "function")
+		) {
+			this.types.delete(key);
+		}
 
 		if (
 			!had ||
